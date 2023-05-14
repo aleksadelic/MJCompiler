@@ -43,8 +43,10 @@ scan with {:
 :}
 
 
-terminal PROG, LBRACE, RBRACE, SEMI, LPAREN, RPAREN, EQUAL, RETURN, PLUS, COMMA, PRINT, VOID, CONST, LBRACKET, RBRACKET;
-terminal CLASS, NEW;
+terminal PROG, LBRACE, RBRACE, SEMI, LPAREN, RPAREN, EQUAL, RETURN, COMMA, PRINT, VOID, CONST, LBRACKET, RBRACKET;
+terminal CLASS, NEW, IF, ELSE, WHILE, BREAK, CONTINUE, READ;
+terminal AND, OR, EQ, NEQ, GT, GE, LT, LE;
+terminal PLUS, MINUS, MUL, DIV;
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal Character CHARACTER;
@@ -52,8 +54,9 @@ terminal Boolean BOOLEAN;
 
 nonterminal Program, DeclList, MethodDeclList, Type, AssignOp, Constant, MethodDecl;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
-nonterminal Statement, StatementList;
+nonterminal Statement, StatementList, Matched, Unmatched, Expr, Condition, RelOp, AddOp, MulOp, Term, Factor, CondTerm, CondFact;
 
+precedence left ELSE; 
 
 Program ::= (Program) PROG IDENT DeclList LBRACE MethodDeclList RBRACE;
 
@@ -114,15 +117,38 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 				
 MethodDecl ::= (MethodDeclType) Type IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			|
-			(MethodDeclVoid) VOID IDENT LPAREN FormPars RPAREN LBRACE RBRACE
+			(MethodDeclVoid) VOID IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			;
 			
-StatementList ::= /*(Statements) StatementList Statement;
-				|*/
+StatementList ::= (Statements) StatementList Statement
+				|
 				(NoStatements) /* epsilon */
 				;
 				
-Statement ::= /* epsilon */;
+Statement ::= (MatchedStatement) Matched
+			|
+			(UnmatchedStatement) Unmatched
+			;
+
+Unmatched ::= (UnmatchedIf) IF LPAREN Condition RPAREN Statement
+			|
+			(UnmatchedIfElse) IF LPAREN Condition RPAREN ELSE Unmatched
+			;
+				
+Matched ::= (MatchedIfElse) IF LPAREN Condition RPAREN Matched ELSE Matched
+			|
+			(WhileStmt) WHILE LPAREN Condition RPAREN Statement
+			|
+			(ContinueStmt) CONTINUE SEMI
+			|
+			(BreakStmt) BREAK SEMI
+			|
+			(ReturnExpr) RETURN Expr SEMI
+			|
+			(ReturnNoExpr) RETURN SEMI 
+			|
+			(MatchedStatements) LBRACE StatementList RBRACE
+			;
 			
 FormPars ::= (FormParamsList) FormParsList
 			|
@@ -144,6 +170,59 @@ FormParsList ::= (FormParsChainMatrix) FormParsList COMMA Type IDENT LBRACKET RB
 
 Type ::= (Type) IDENT;
 
+Condition ::= (MultCondition) Condition OR CondTerm
+			|
+			(SingleCondition) CondTerm
+			;
+			
+CondTerm ::= (MultCondTerm) CondTerm AND CondFact
+			|
+			(SingleCondTerm) CondFact
+			;
+			
+CondFact ::= (MultCondFact) Expr RelOp Expr
+			|
+			(SingleCondFact) Expr
+			;
+			
+Expr ::= (AddOpTermExpr) Term AddOp Term
+		|
+		(TermExpr) Term
+		;
+
+Term ::= (MulOpFactorTerm) Factor MulOp Factor
+		|
+		(FactorTerm) Factor
+		;
+		
+Factor ::= (NumConst) NUMBER
+		|
+		(CharConst) CHARACTER
+		|
+		(BoolConst) BOOLEAN
+		;
+
 AssignOp ::= (AssignOp) EQUAL;
 
+RelOp ::= (RelOpEq) EQ
+		|
+		(RelOpNeq) NEQ
+		|
+		(RelOpGt) GT
+		|
+		(RelOpGe) GE
+		|
+		(RelOpLt) LT
+		|
+		(RelOpLe) LE
+		;
 
+AddOp ::= (AddOpPlus) PLUS
+		|
+		(AddOpMinus) MINUS
+		;
+
+MulOp ::= (MulOpMul) MUL
+		|
+		(MulOpDiv) DIV
+		;

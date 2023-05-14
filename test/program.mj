@@ -14,7 +14,7 @@ program MJProgram
 		int a;
 		
 		{
-		void foo1() {}
+		void foo1(int par1, int par2[]) {}
 		
 		int foo2() {}
 		}
@@ -22,10 +22,15 @@ program MJProgram
 	
 {
 	void main() {
-		
+		while (true == 1) {
+			continue;
+		}
 	}
 	
-	int foo() {
-		
+	int foo(int a, int b[], char c[][], boolean isGood)
+	int locVar, locVar2;
+	char locVar3;
+	{
+		return 1 + 1;
 	}
 }

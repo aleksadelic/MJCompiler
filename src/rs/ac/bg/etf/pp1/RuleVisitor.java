@@ -28,12 +28,12 @@ public class RuleVisitor extends VisitorAdaptor {
     
     public void visit(VarDeclHeadArr varDecl) {
     	varCount++;
-    	log.info("Prepoznata deklaracija niza");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza");
     }
     
     public void visit(VarDeclHeadMatrix varDecl) {
     	varCount++;
-    	log.info("Prepoznata deklaracija matrice");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice");
     }
     
     public void visit(VarDeclChain varDecl) {
@@ -42,12 +42,12 @@ public class RuleVisitor extends VisitorAdaptor {
     
     public void visit(VarDeclChainArr varDecl) {
     	varCount++;
-    	log.info("Prepoznata deklaracija niza");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza");
     }
     
     public void visit(VarDeclChainMatrix varDecl) {
     	varCount++;
-    	log.info("Prepoznata deklaracija matrice");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice");
     }
     
     public void visit(ConstDeclHead varDecl) {
@@ -60,32 +60,55 @@ public class RuleVisitor extends VisitorAdaptor {
     
     public void visit(ClassDecl classDecl) {
     	classDeclCount++;
-    	log.info("Prepoznata deklaracija klase");
+    	log.info(classDecl.getLine() + " Prepoznata deklaracija klase");
     }
     
     public void visit(FormParsHead formPar) {
-    	log.info("Prepoznat formalni parametar");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar");
     }
     
     public void visit(FormParsChain formPar) {
-    	log.info("Prepoznat formalni parametar");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar");
     }
     
     public void visit(FormParsHeadArr formPar) {
-    	log.info("Prepoznat formalni parametar niz");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar niz");
     }
     
     public void visit(FormParsChainArr formPar) {
-    	log.info("Prepoznat formalni parametar niz");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar niz");
     }
     
     public void visit(FormParsHeadMatrix formPar) {
-    	log.info("Prepoznat formalni parametar matrica");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar matrica");
     }
     
     public void visit(FormParsChainMatrix formPar) {
-    	log.info("Prepoznat formalni parametar matrica");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar matrica");
     }
     
-
+    public void visit(MatchedIfElse matchedIfElse) {
+    	log.info(matchedIfElse.getLine() + " Prepoznat MatchedIfElse");
+    }
+    
+    public void visit(WhileStmt whileStmt) {
+    	log.info(whileStmt.getLine() + " Prepoznat while");
+    }
+    
+    public void visit(BreakStmt breakStmt) {
+    	log.info(breakStmt.getLine() + " Prepoznat break");
+    }
+    
+    public void visit(ContinueStmt continueStmt) {
+    	log.info(continueStmt.getLine() + " Prepoznat continue");
+    }
+    
+    public void visit(SingleCondition condition) {
+    	log.info(condition.getLine() + " Prepoznat condition");
+    }
+    
+    public void visit(ReturnExpr returnExpr) {
+    	log.info(returnExpr.getLine() + " Prepoznat returnExpr");
+    }
+    
 }

@@ -51,7 +51,8 @@ terminal Character CHARACTER;
 terminal Boolean BOOLEAN;
 
 nonterminal Program, DeclList, MethodDeclList, Type, AssignOp, Constant, MethodDecl;
-nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList;
+nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
+nonterminal Statement, StatementList;
 
 
 Program ::= (Program) PROG IDENT DeclList LBRACE MethodDeclList RBRACE;
@@ -111,10 +112,35 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 				(NoMethodDeclarations) /* epsilon */
 				;
 				
-MethodDecl ::= (MethodDeclType) Type IDENT LPAREN RPAREN LBRACE RBRACE
+MethodDecl ::= (MethodDeclType) Type IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			|
-			(MethodDeclVoid) VOID IDENT LPAREN RPAREN LBRACE RBRACE
+			(MethodDeclVoid) VOID IDENT LPAREN FormPars RPAREN LBRACE RBRACE
 			;
+			
+StatementList ::= /*(Statements) StatementList Statement;
+				|*/
+				(NoStatements) /* epsilon */
+				;
+				
+Statement ::= /* epsilon */;
+			
+FormPars ::= (FormParamsList) FormParsList
+			|
+			(NoFormPars) /* epsilon */
+			;
+			
+FormParsList ::= (FormParsChainMatrix) FormParsList COMMA Type IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+				|
+				(FormParsChainArr) FormParsList COMMA Type IDENT LBRACKET RBRACKET
+				|
+				(FormParsChain) FormParsList COMMA Type IDENT
+				|
+				(FormParsHeadMatrix) Type IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+				|
+				(FormParsHeadArr) Type IDENT LBRACKET RBRACKET
+				|
+				(FormParsHead) Type IDENT
+				; 
 
 Type ::= (Type) IDENT;
 

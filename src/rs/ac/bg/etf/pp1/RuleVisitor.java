@@ -62,5 +62,30 @@ public class RuleVisitor extends VisitorAdaptor {
     	classDeclCount++;
     	log.info("Prepoznata deklaracija klase");
     }
+    
+    public void visit(FormParsHead formPar) {
+    	log.info("Prepoznat formalni parametar");
+    }
+    
+    public void visit(FormParsChain formPar) {
+    	log.info("Prepoznat formalni parametar");
+    }
+    
+    public void visit(FormParsHeadArr formPar) {
+    	log.info("Prepoznat formalni parametar niz");
+    }
+    
+    public void visit(FormParsChainArr formPar) {
+    	log.info("Prepoznat formalni parametar niz");
+    }
+    
+    public void visit(FormParsHeadMatrix formPar) {
+    	log.info("Prepoznat formalni parametar matrica");
+    }
+    
+    public void visit(FormParsChainMatrix formPar) {
+    	log.info("Prepoznat formalni parametar matrica");
+    }
+    
 
 }

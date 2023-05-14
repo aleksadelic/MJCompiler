@@ -1,11 +1,31 @@
 program MJProgram
-	int x; int y;
+	int a[];
+	int b[][], c[];
+	const int x = 1;
+	const int y = 2, z = 3;
+	
+	class A {
+		char c;
+		boolean flag;
+		int arr[];	
+	}
+	
+	class B {
+		int a;
+		
+		{
+		void foo1() {}
+		
+		int foo2() {}
+		}
+	}
+	
 {
-	int main() {
-		print(1);
+	void main() {
 		
-		x = y + 5 + ;
+	}
+	
+	int foo() {
 		
-		print(2);	
 	}
 }

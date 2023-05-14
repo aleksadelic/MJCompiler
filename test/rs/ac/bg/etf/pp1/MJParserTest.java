@@ -46,10 +46,13 @@ public class MJParserTest {
 			RuleVisitor v = new RuleVisitor();
 			prog.traverseBottomUp(v); 
 	      
-			log.info(" Print count calls = " + v.printCallCount);
+			log.info(" Deklarisanja konstanti ima = " + v.constDeclCount);
+			log.info(" Deklarisanja promenljivih ima = " + v.varDeclCount);
 
-			log.info(" Deklarisanih promenljivih ima = " + v.varDeclCount);
-			
+			log.info(" Deklarisanih konstanti ima = " + v.constCount);
+			log.info(" Deklarisanih promenljivih ima = " + v.varCount);
+
+			log.info(" Deklarisanih klasa ima = " + v.classDeclCount);
 		} 
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }

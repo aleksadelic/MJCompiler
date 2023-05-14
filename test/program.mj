@@ -14,9 +14,9 @@ program MJProgram
 		int a;
 		
 		{
-		void foo1(int par1, int par2[]) {}
+		void foo1(int par1, int par2[]) { a--; }
 		
-		int foo2() {}
+		int foo2() { a++; }
 		}
 	}
 	
@@ -31,6 +31,8 @@ program MJProgram
 	int locVar, locVar2;
 	char locVar3;
 	{
+		locVar = 0;
+		locVar++;
 		return 1 + 1;
 	}
 }

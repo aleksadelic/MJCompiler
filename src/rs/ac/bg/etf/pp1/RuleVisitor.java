@@ -111,4 +111,8 @@ public class RuleVisitor extends VisitorAdaptor {
     	log.info(returnExpr.getLine() + " Prepoznat returnExpr");
     }
     
+    public void visit(DesignatorStmt designatorStmt) {
+    	log.info(designatorStmt.getLine() + " Prepoznat designatorStmt");
+    }
+    
 }

@@ -24,30 +24,32 @@ public class RuleVisitor extends VisitorAdaptor {
     
     public void visit(VarDeclHead varDecl) {
     	varCount++;
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija promenljive " + varDecl.getVarName());
     }
     
     public void visit(VarDeclHeadArr varDecl) {
     	varCount++;
-    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza " + varDecl.getVarName());
     }
     
     public void visit(VarDeclHeadMatrix varDecl) {
     	varCount++;
-    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice " + varDecl.getVarName());
     }
     
     public void visit(VarDeclChain varDecl) {
     	varCount++;
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija promenljive " + varDecl.getVarName());
     }
     
     public void visit(VarDeclChainArr varDecl) {
     	varCount++;
-    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija niza " + varDecl.getVarName());
     }
     
     public void visit(VarDeclChainMatrix varDecl) {
     	varCount++;
-    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice");
+    	log.info(varDecl.getLine() + " Prepoznata deklaracija matrice " + varDecl.getVarName());
     }
     
     public void visit(ConstDeclHead varDecl) {
@@ -64,11 +66,11 @@ public class RuleVisitor extends VisitorAdaptor {
     }
     
     public void visit(FormParsHead formPar) {
-    	log.info(formPar.getLine() + " Prepoznat formalni parametar");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar " + formPar.getParName());
     }
     
     public void visit(FormParsChain formPar) {
-    	log.info(formPar.getLine() + " Prepoznat formalni parametar");
+    	log.info(formPar.getLine() + " Prepoznat formalni parametar " + formPar.getParName());
     }
     
     public void visit(FormParsHeadArr formPar) {
@@ -115,4 +117,19 @@ public class RuleVisitor extends VisitorAdaptor {
     	log.info(designatorStmt.getLine() + " Prepoznat designatorStmt");
     }
     
+    public void visit(ConstrFactorMatrix factor) {
+    	log.info(factor.getLine() + " Prepoznata alokacija matrice");
+    }
+    
+    public void visit(ConstrFactorArr factor) {
+    	log.info(factor.getLine() + " Prepoznata alokacija niza");
+    }
+    
+    public void visit(PrintStmt stmt) {
+    	log.info(stmt.getLine() + " Prepoznata print naredba");
+    }
+    
+    public void visit(MapStmt stmt) {
+    	log.info(stmt.getLine() + " Prepoznata map funkcija");
+    }
 }

@@ -46,7 +46,7 @@ scan with {:
 terminal PROG, LBRACE, RBRACE, SEMI, LPAREN, RPAREN, EQUAL, RETURN, COMMA, PRINT, VOID, CONST, LBRACKET, RBRACKET, DOT;
 terminal CLASS, NEW, IF, ELSE, WHILE, BREAK, CONTINUE, READ;
 terminal AND, OR, EQ, NEQ, GT, GE, LT, LE;
-terminal PLUS, MINUS, MUL, DIV, INCREMENT, DECREMENT;
+terminal PLUS, MINUS, MUL, DIV, MOD, INCREMENT, DECREMENT, MAP, ARROW;
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal Character CHARACTER;
@@ -59,7 +59,7 @@ nonterminal Designator, Label, ActPars, ActParsList, OptActParsInParens, Designa
 
 precedence left ELSE; 
 
-Program ::= (Program) PROG IDENT DeclList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROG IDENT:progName DeclList LBRACE MethodDeclList RBRACE;
 
 DeclList ::= (DeclListConst) DeclList ConstDeclSemi
 			|
@@ -72,31 +72,34 @@ DeclList ::= (DeclListConst) DeclList ConstDeclSemi
 
 ConstDeclSemi ::= (ConstDeclSemi) ConstDecl SEMI;
 			
-ConstDecl ::= (ConstDeclChain) ConstDecl COMMA IDENT AssignOp Constant
+ConstDecl ::= (ConstDeclChain) ConstDecl COMMA IDENT:constName AssignOp Constant
 					|
-					(ConstDeclHead) CONST Type IDENT AssignOp Constant
+					(ConstDeclHead) CONST Type IDENT:constName AssignOp Constant
 					;
 					
 VarDeclSemi ::= (VarDeclSemi) VarDecl SEMI;
 
-VarDecl ::= (VarDeclChainMatrix) VarDecl COMMA IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+VarDecl ::= (VarDeclChainMatrix) VarDecl COMMA IDENT:varName LBRACKET RBRACKET LBRACKET RBRACKET
 				|
-				(VarDeclChainArr) VarDecl COMMA IDENT LBRACKET RBRACKET
+				(VarDeclChainArr) VarDecl COMMA IDENT:varName LBRACKET RBRACKET
 				|
-				(VarDeclChain) VarDecl COMMA IDENT
+				(VarDeclChain) VarDecl COMMA IDENT:varName
 				|
-				(VarDeclHeadMatrix) Type IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+				(VarDeclHeadMatrix) Type IDENT:varName LBRACKET RBRACKET LBRACKET RBRACKET
 				|
-				(VarDeclHeadArr) Type IDENT LBRACKET RBRACKET
+				(VarDeclHeadArr) Type IDENT:varName LBRACKET RBRACKET
 				|
-				(VarDeclHead) Type IDENT
+				(VarDeclHead) Type IDENT:varName
+				|
+				(ErrorVarDecl) error:l
+				{: parser.report_error("Sintaksna greska pri deklaracije promenljive u liniji " + lleft, null); :} 
 				;
 
-ClassDecl ::= (ClassDecl) CLASS IDENT LBRACE VarDeclList ClassMethodDeclList RBRACE;
+ClassDecl ::= (ClassDecl) CLASS IDENT:className LBRACE VarDeclList ClassMethodDeclList RBRACE;
 
 ClassMethodDeclList ::= (ClassMethodDeclarations) LBRACE MethodDeclList RBRACE
 					|
-					(NoClassMethodDeclarations)/* epsilon */
+					(NoClassMethodDeclarations) /* epsilon */
 					;
 
 VarDeclList ::= (VarDeclarations) VarDeclList VarDeclSemi
@@ -116,9 +119,9 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 				(NoMethodDeclarations) /* epsilon */
 				;
 				
-MethodDecl ::= (MethodDeclType) Type IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
+MethodDecl ::= (MethodDeclType) Type IDENT:methodName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			|
-			(MethodDeclVoid) VOID IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
+			(MethodDeclVoid) VOID IDENT:methodName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			;
 			
 StatementList ::= (Statements) StatementList Statement
@@ -156,6 +159,8 @@ Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(PrintStmt) PRINT LPAREN Expr RPAREN SEMI
 			|
+			(MapStmt) Designator AssignOp Designator DOT MAP LPAREN IDENT ARROW Expr RPAREN SEMI
+			|
 			(MatchedStatements) LBRACE StatementList RBRACE
 			;
 			
@@ -164,22 +169,28 @@ FormPars ::= (FormParamsList) FormParsList
 			(NoFormPars) /* epsilon */
 			;
 			
-FormParsList ::= (FormParsChainMatrix) FormParsList COMMA Type IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+FormParsList ::= (FormParsChainMatrix) FormParsList COMMA Type IDENT:parName LBRACKET RBRACKET LBRACKET RBRACKET
 				|
-				(FormParsChainArr) FormParsList COMMA Type IDENT LBRACKET RBRACKET
+				(FormParsChainArr) FormParsList COMMA Type IDENT:parName LBRACKET RBRACKET
 				|
-				(FormParsChain) FormParsList COMMA Type IDENT
+				(FormParsChain) FormParsList COMMA Type IDENT:parName
 				|
-				(FormParsHeadMatrix) Type IDENT LBRACKET RBRACKET LBRACKET RBRACKET
+				(FormParsHeadMatrix) Type IDENT:parName LBRACKET RBRACKET LBRACKET RBRACKET
 				|
-				(FormParsHeadArr) Type IDENT LBRACKET RBRACKET
+				(FormParsHeadArr) Type IDENT:parName LBRACKET RBRACKET
 				|
-				(FormParsHead) Type IDENT
+				(FormParsHead) Type IDENT:parName
+				|
+				(ErrorFormPars) error:l
+				{: parser.report_error("Sintaksna greska pri navodjenju formalnog parametra funkcije u liniji " + lleft, null); :}
 				; 
 
-Type ::= (Type) IDENT;
+Type ::= (Type) IDENT:typeName;
 
 DesignatorStatement ::= (DesignatorStmtAssign) Designator AssignOp Expr
+					|
+					(ErrorAssign) error:l
+					{: parser.report_error("Sintaksna greska pri konstrukciji iskaza dodele u liniji " + lleft, null); :} 
 					|
 					(DesignatorStmtActPar) Designator OptActParsInParens
 					|
@@ -191,6 +202,9 @@ DesignatorStatement ::= (DesignatorStmtAssign) Designator AssignOp Expr
 Condition ::= (MultCondition) Condition OR CondTerm
 			|
 			(SingleCondition) CondTerm
+			|
+			(ErrorCond) error:l
+			{: parser.report_error("Sintaksna greska pri logickom izrazu u liniji " + lleft, null); :} 
 			;
 			
 CondTerm ::= (MultCondTerm) CondTerm AND CondFact
@@ -223,7 +237,9 @@ Factor ::= (DesignatorFactorParens) Designator OptActParsInParens
 		|
 		(BoolConst) BOOLEAN
 		|
-		(ConstrFactorExpr) NEW Type LBRACKET Expr RBRACKET 
+		(ConstrFactorMatrix) NEW Type LBRACKET Expr RBRACKET LBRACKET Expr RBRACKET 
+		|
+		(ConstrFactorArr) NEW Type LBRACKET Expr RBRACKET 
 		|
 		(ConstrFactorActPars) NEW Type OptActParsInParens
 		|
@@ -249,7 +265,7 @@ Designator ::= (DesignatorChainIdent) Designator DOT IDENT
 			|
 			(DesignatorChainExpr) Designator LBRACKET Expr RBRACKET
 			|
-			(DesignatorIdent) IDENT
+			(DesignatorIdent) IDENT:name
 			;
 
 Label ::= (Label) IDENT;
@@ -277,4 +293,6 @@ AddOp ::= (AddOpPlus) PLUS
 MulOp ::= (MulOpMul) MUL
 		|
 		(MulOpDiv) DIV
+		|
+		(MulOpMod) MOD
 		;

@@ -49,6 +49,8 @@ import java_cup.runtime.Symbol;
 "break" 	{ return new_symbol(sym.BREAK, yytext()); }
 "continue" 	{ return new_symbol(sym.CONTINUE, yytext()); }
 "read" 		{ return new_symbol(sym.READ, yytext()); }
+"map" 		{ return new_symbol(sym.MAP, yytext()); }
+"=>" 		{ return new_symbol(sym.ARROW, yytext()); }
 ";" 		{ return new_symbol(sym.SEMI, yytext()); }
 "," 		{ return new_symbol(sym.COMMA, yytext()); }
 "(" 		{ return new_symbol(sym.LPAREN, yytext()); }
@@ -72,6 +74,7 @@ import java_cup.runtime.Symbol;
 "-" 		{ return new_symbol(sym.MINUS, yytext()); }
 "*" 		{ return new_symbol(sym.MUL, yytext()); }
 "/" 		{ return new_symbol(sym.DIV, yytext()); }
+"%" 		{ return new_symbol(sym.MOD, yytext()); }
 "=" 		{ return new_symbol(sym.EQUAL, yytext()); }
 
 "//" { yybegin(COMMENT); }
@@ -79,7 +82,7 @@ import java_cup.runtime.Symbol;
 <COMMENT> "\r\n" { yybegin(YYINITIAL); }
 
 [0-9]+  { return new_symbol(sym.NUMBER, new Integer (yytext())); }
-'.'  { return new_symbol(sym.CHARACTER, new Character (yytext().charAt(1))); }
+'[\ ~]'  { return new_symbol(sym.CHARACTER, new Character (yytext().charAt(1))); }
 "true"|"false"  { return new_symbol(sym.BOOLEAN, new Boolean (yytext())); }
 ([a-z]|[A-Z])[a-z|A-Z|0-9|_]* 	{ return new_symbol (sym.IDENT, yytext()); }
 

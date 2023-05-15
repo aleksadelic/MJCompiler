@@ -1,0 +1,14 @@
+program MJProgram
+	int a+, b=, c;
+	int x-, 2y;
+	char ch-0;
+{
+	void main() {
+		a = 2+;
+	}
+	
+	int foo(int a+, int b, int c) { 
+		if (a === b) return 1;
+		return 0;
+	}
+}

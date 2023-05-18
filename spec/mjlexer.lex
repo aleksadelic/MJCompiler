@@ -82,7 +82,7 @@ import java_cup.runtime.Symbol;
 <COMMENT> "\r\n" { yybegin(YYINITIAL); }
 
 [0-9]+  { return new_symbol(sym.NUMBER, new Integer (yytext())); }
-'[\ ~]'  { return new_symbol(sym.CHARACTER, new Character (yytext().charAt(1))); }
+'.'  { return new_symbol(sym.CHARACTER, new Character (yytext().charAt(1))); }
 "true"|"false"  { return new_symbol(sym.BOOLEAN, new Boolean (yytext())); }
 ([a-z]|[A-Z])[a-z|A-Z|0-9|_]* 	{ return new_symbol (sym.IDENT, yytext()); }
 

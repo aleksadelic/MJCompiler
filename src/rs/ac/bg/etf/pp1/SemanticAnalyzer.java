@@ -8,14 +8,15 @@ import rs.etf.pp1.symboltable.concepts.*;
 
 public class SemanticAnalyzer extends VisitorAdaptor {
 
-	int printCallCount = 0;
-	int varDeclCount = 0;
 	Obj currentMethod = null;
 	boolean returnFound = false;
 	boolean errorDetected = false;
 	int nVars;
 
 	Logger log = Logger.getLogger(getClass());
+	
+	private Struct boolType = Tab.find("bool").getType();
+	private Struct currentType = null;
 
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
@@ -46,9 +47,95 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(VarDeclHead varDecl) {
-		varDeclCount++;
 		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		currentType = varDecl.getType().struct;
+	}
+	
+	public void visit(VarDeclChain varDecl) {
+		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+	}
+	
+	public void visit(VarDeclHeadArr varDecl) {	
+		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		currentType = varDecl.getType().struct;
+	}
+	
+	public void visit(VarDeclChainArr varDecl) {
+		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+	}
+	
+	public void visit(VarDeclHeadMatrix varDecl) {
+		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		currentType = varDecl.getType().struct;
+	}
+	
+	public void visit(VarDeclChainMatrix varDecl) {
+		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+	}
+	
+	public void visit(VarDeclSemi varDeclSemi) {
+		currentType = null;
+	}
+	
+	public void visit(ConstDeclHead constDecl) {
+		if (!constDecl.getType().struct.equals(constDecl.getConstant().struct)) {
+			report_error("Greska na liniji " + constDecl.getLine() + " : " + "nekompatibilni tipovi pri deklaraciji konstante! ", null);
+		} else {
+			report_info("Deklarisana konstanta " + constDecl.getConstName(), constDecl);
+			Obj constNode = Tab.insert(Obj.Con, constDecl.getConstName(), constDecl.getType().struct);
+			Constant myConstant = constDecl.getConstant();
+			
+			if (myConstant instanceof NumConst) {
+				constNode.setAdr(((NumConst)myConstant).getNumber());
+			} else if (myConstant instanceof CharConst) {
+				constNode.setAdr(((CharConst)myConstant).getCharacter());
+			} else if (myConstant instanceof BoolConst) {
+				if (((BoolConst)myConstant).getBool()) {
+					constNode.setAdr(1);	
+				} else {
+					constNode.setAdr(0);
+				}
+			}
+			
+			currentType = constDecl.getType().struct;
+		}
+	}
+	
+	public void visit(ConstDeclChain constDecl) {
+		if (!currentType.equals(constDecl.getConstant().struct)) {
+			report_error("Greska na liniji " + constDecl.getLine() + " : " + "nekompatibilni tipovi pri deklaraciji konstante! ", null);
+		} else {
+			report_info("Deklarisana konstanta " + constDecl.getConstName(), constDecl);
+			Obj constNode = Tab.insert(Obj.Con, constDecl.getConstName(), currentType);
+			Constant myConstant = constDecl.getConstant();
+			
+			if (myConstant instanceof NumConst) {
+				constNode.setAdr(((NumConst)myConstant).getNumber());
+			} else if (myConstant instanceof CharConst) {
+				constNode.setAdr(((CharConst)myConstant).getCharacter());
+			} else if (myConstant instanceof BoolConst) {
+				if (((BoolConst)myConstant).getBool()) {
+					constNode.setAdr(1);	
+				} else {
+					constNode.setAdr(0);
+				}
+			}
+			
+		}
+	}
+	
+	public void visit(ConstDeclSemi constDeclSemi) {
+		currentType = null;
+	}
+	
+	public void visit(ConstDecl constDecl) {
+		currentType = null;
 	}
 
 	public void visit(Type type) {
@@ -133,6 +220,18 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(NumConst numConst) {
 		numConst.struct = Tab.intType;
+	}
+	
+	public void visit(CharConst charConst) {
+		charConst.struct = Tab.charType;
+	}
+	
+	public void visit(BoolConst boolConst) {
+		boolConst.struct = boolType;
+	}
+	
+	public void visit(FactorConst factorConst) {
+		factorConst.struct = factorConst.getConstant().struct;
 	}
 	
 	public void visit(FactorVar factorVar) {

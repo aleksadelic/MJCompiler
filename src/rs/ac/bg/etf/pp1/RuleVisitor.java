@@ -132,4 +132,17 @@ public class RuleVisitor extends VisitorAdaptor {
 	public void visit(MapStmt stmt) {
 		log.info(stmt.getLine() + " Prepoznata map funkcija");
 	}
+	
+	public void visit(NumConst numConst) {
+		log.info("Prepoznat number sa vrednoscu: " + numConst.getNumber(), null);
+	}
+	
+	public void visit(CharConst charConst) {
+		log.info("Prepoznat char sa vrednoscu: " + charConst.getCharacter(), null);
+	}
+	
+	public void visit(BoolConst boolConst) {
+		log.info("Prepoznat boolean sa vrednoscu: " + boolConst.getBool(), null);
+	}
+	
 }

@@ -58,13 +58,13 @@ terminal Integer NUMBER;
 terminal Character CHARACTER;
 terminal Boolean BOOLEAN;
 
-nonterminal DeclList, MethodDeclList, AssignOp, Constant;
+nonterminal DeclList, MethodDeclList, AssignOp;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
 nonterminal Statement, StatementList, Matched, Unmatched, Condition, RelOp, AddOp, MulOp, CondTerm, CondFact;
 nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, Designator;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr, Constant;
 
 precedence left ELSE; 
 
@@ -118,11 +118,11 @@ VarDeclList ::= (VarDeclarations) VarDeclList VarDeclSemi
 				(NoVarDeclarations) /* epsilon */
 				;
 				
-Constant ::= (ConstNum) NUMBER
+Constant ::= (NumConst) NUMBER:number
 		|
-		(ConstChar) CHARACTER
+		(CharConst) CHARACTER:character
 		|
-		(ConstBool) BOOLEAN
+		(BoolConst) BOOLEAN:bool
 		;
 
 MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
@@ -248,11 +248,7 @@ Factor ::= (FuncCall) Designator LPAREN ActPars RPAREN
 		|
 		(FactorVar) Designator
 		|
-		(NumConst) NUMBER
-		|
-		(CharConst) CHARACTER
-		|
-		(BoolConst) BOOLEAN
+		(FactorConst) Constant
 		|
 		(ConstrFactorMatrix) NEW Type LBRACKET Expr RBRACKET LBRACKET Expr RBRACKET 
 		|

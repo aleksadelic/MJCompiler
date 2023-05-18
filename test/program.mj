@@ -4,6 +4,9 @@ program MJProgram
 	const int x = 1;
 	const int y = 2, z = 3;
 	
+	char c1;
+	boolean b1;
+	
 	class A {
 		char c;
 		boolean flag;
@@ -25,7 +28,8 @@ program MJProgram
 		b = new int[5][5];
 		c = new int[10];
 		a = 0;
-		
+		c1 = 'a';
+		b1 = true;
 		while (a < 10) {
 			if (a % 2 != 0) print(a);
 			a++;

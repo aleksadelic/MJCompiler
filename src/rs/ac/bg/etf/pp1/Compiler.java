@@ -42,6 +42,7 @@ public class Compiler {
 
 			Program prog = (Program) (s.value);
 			Tab.init();
+			Tab.currentScope.addToLocals(new Obj(Obj.Type, "bool", new Struct(Struct.Bool)));
 			// ispis sintaksnog stabla
 			log.info(prog.toString(""));
 			log.info("===================================");
@@ -50,14 +51,6 @@ public class Compiler {
 			SemanticAnalyzer v = new SemanticAnalyzer();
 			prog.traverseBottomUp(v);
 
-			/*log.info(" Deklarisanja konstanti ima = " + v.constDeclCount);
-			log.info(" Deklarisanja promenljivih ima = " + v.varDeclCount);
-
-			log.info(" Deklarisanih konstanti ima = " + v.constCount);
-			log.info(" Deklarisanih promenljivih ima = " + v.varCount);
-
-			log.info(" Deklarisanih klasa ima = " + v.classDeclCount);*/
-			
 			log.info("===================================");
 			Tab.dump();
 			

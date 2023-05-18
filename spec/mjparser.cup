@@ -60,11 +60,11 @@ terminal Boolean BOOLEAN;
 
 nonterminal DeclList, MethodDeclList, AssignOp;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
-nonterminal Statement, StatementList, Matched, Unmatched, Condition, RelOp, AddOp, MulOp, CondTerm, CondFact;
+nonterminal Statement, StatementList, Matched, Unmatched, RelOp, AddOp, MulOp;
 nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, Designator;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr, Constant;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr, Constant, Condition, CondFact, CondTerm;
 
 precedence left ELSE; 
 
@@ -239,7 +239,7 @@ Expr ::= (AddOpTermExpr) Expr AddOp Term
 		(TermExpr) Term
 		;
 
-Term ::= (MulOpFactorTerm) Factor MulOp Factor
+Term ::= (MulOpFactorTerm) Term:f1 MulOp Factor:f2
 		|
 		(FactorTerm) Factor
 		;

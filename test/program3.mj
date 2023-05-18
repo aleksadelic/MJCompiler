@@ -4,7 +4,9 @@ program MJProgram
 	int x; int y;
 	bool isFalse;
 	const char c = 'a';
-	const char notCorrect = 2;
+	// const char notCorrect = 2;
+	int arr[];
+	int matrix[][];
 {
 
 	int k () int c; {
@@ -16,6 +18,8 @@ program MJProgram
 		
 		print(1);
 		
+		arr = new int[5];
+		matrix = new char[3][4]; // error
 		x = y + 5 + 3 ;
 		
 		print(2);

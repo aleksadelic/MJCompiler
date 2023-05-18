@@ -58,25 +58,25 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(VarDeclHeadArr varDecl) {	
-		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
 		currentType = varDecl.getType().struct;
 	}
 	
 	public void visit(VarDeclChainArr varDecl) {
-		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
 	}
 	
 	public void visit(VarDeclHeadMatrix varDecl) {
-		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, new Struct(Struct.Array, varDecl.getType().struct)));
 		currentType = varDecl.getType().struct;
 	}
 	
 	public void visit(VarDeclChainMatrix varDecl) {
-		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
+		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
 	}
 	
 	public void visit(VarDeclSemi varDeclSemi) {
@@ -89,20 +89,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		} else {
 			report_info("Deklarisana konstanta " + constDecl.getConstName(), constDecl);
 			Obj constNode = Tab.insert(Obj.Con, constDecl.getConstName(), constDecl.getType().struct);
-			Constant myConstant = constDecl.getConstant();
-			
-			if (myConstant instanceof NumConst) {
-				constNode.setAdr(((NumConst)myConstant).getNumber());
-			} else if (myConstant instanceof CharConst) {
-				constNode.setAdr(((CharConst)myConstant).getCharacter());
-			} else if (myConstant instanceof BoolConst) {
-				if (((BoolConst)myConstant).getBool()) {
-					constNode.setAdr(1);	
-				} else {
-					constNode.setAdr(0);
-				}
-			}
-			
+			setConstValue(constDecl, constNode);
 			currentType = constDecl.getType().struct;
 		}
 	}
@@ -113,28 +100,29 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		} else {
 			report_info("Deklarisana konstanta " + constDecl.getConstName(), constDecl);
 			Obj constNode = Tab.insert(Obj.Con, constDecl.getConstName(), currentType);
-			Constant myConstant = constDecl.getConstant();
-			
-			if (myConstant instanceof NumConst) {
-				constNode.setAdr(((NumConst)myConstant).getNumber());
-			} else if (myConstant instanceof CharConst) {
-				constNode.setAdr(((CharConst)myConstant).getCharacter());
-			} else if (myConstant instanceof BoolConst) {
-				if (((BoolConst)myConstant).getBool()) {
-					constNode.setAdr(1);	
-				} else {
-					constNode.setAdr(0);
-				}
+			setConstValue(constDecl, constNode);
+		}
+	}
+	
+	private void setConstValue(ConstDecl constDecl, Obj constNode) {
+		Constant myConstant = null;
+		if (constDecl instanceof ConstDeclHead) myConstant = ((ConstDeclHead)constDecl).getConstant();
+		else if (constDecl instanceof ConstDeclChain) myConstant = ((ConstDeclChain)constDecl).getConstant();
+		
+		if (myConstant instanceof NumConst) {
+			constNode.setAdr(((NumConst)myConstant).getNumber());
+		} else if (myConstant instanceof CharConst) {
+			constNode.setAdr(((CharConst)myConstant).getCharacter());
+		} else if (myConstant instanceof BoolConst) {
+			if (((BoolConst)myConstant).getBool()) {
+				constNode.setAdr(1);	
+			} else {
+				constNode.setAdr(0);
 			}
-			
 		}
 	}
 	
 	public void visit(ConstDeclSemi constDeclSemi) {
-		currentType = null;
-	}
-	
-	public void visit(ConstDecl constDecl) {
 		currentType = null;
 	}
 
@@ -247,9 +235,82 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(DesignatorStmtAssign assignment) {
+		//report_info("TIP1: " + assignment.getDesignator().obj.getType().getKind(), assignment);
+		//report_info("TIP2: " + assignment.getExpr().struct.getKind(), assignment);
 		if (!assignment.getExpr().struct.assignableTo(assignment.getDesignator().obj.getType())) {
     		report_error("Greska na liniji " + assignment.getLine() + " : " + "nekompatibilni tipovi u dodeli vrednosti! ", null);
 		}
+	}
+	
+	public void visit(DesignatorChainExpr arrAcces) {
+		if (arrAcces.getDesignator().obj.getType().getKind() != Struct.Array) {
+			report_error("Greska na liniji " + arrAcces.getLine() + " : " + "designator mora biti niz! ", null);
+		}
+		if (!arrAcces.getExpr().struct.equals(Tab.intType)) {
+    		report_error("Greska na liniji " + arrAcces.getLine() + " : " + "indeks niza mora biti celobrojnog tipa! ", null);
+		}
+	}
+	
+	public void visit(ConstrFactorArr constrFactorArr) {
+		if (!constrFactorArr.getExpr().struct.equals(Tab.intType)) {
+			report_error("Greska na liniji " + constrFactorArr.getLine() + " : " + "velicina niza mora biti celobrojna! ", null);
+		}
+		constrFactorArr.struct = new Struct(Struct.Array, constrFactorArr.getType().struct);
+	}
+	
+	public void visit(ConstrFactorMatrix constrFactorMatrix) {
+		if (!constrFactorMatrix.getExpr().struct.equals(Tab.intType) || !constrFactorMatrix.getExpr1().struct.equals(Tab.intType)) {
+			report_error("Greska na liniji " + constrFactorMatrix.getLine() + " : " + "velicina niza mora biti celobrojna! ", null);
+		}
+		constrFactorMatrix.struct = new Struct(Struct.Array, new Struct(Struct.Array, constrFactorMatrix.getType().struct));
+	}
+	
+	public void visit(UnmatchedIf unmatchedIf) {
+		checkConditionType(unmatchedIf.getCondition());
+	}
+	
+	public void visit(UnmatchedIfElse unmatchedIfElse) {
+		checkConditionType(unmatchedIfElse.getCondition());
+	}
+	
+	public void visit(MatchedIfElse matchedIfElse) {
+		checkConditionType(matchedIfElse.getCondition());
+	}
+	
+	private void checkConditionType(Condition condition) {
+		if (!condition.struct.equals(boolType)) {
+			report_error("Greska na liniji " + condition.getLine() + " : " + "uslov mora biti boolean tipa! ", null);
+		}
+	}
+	
+	public void visit(WhileStmt whileStmt) {
+		checkConditionType(whileStmt.getCondition());
+	}
+	
+	public void visit(TermExprMinus termExprMinus) {
+		if (!termExprMinus.struct.equals(Tab.intType)) {
+			report_error("Greska na liniji " + termExprMinus.getLine() + " : " + "izraz mora biti celobrojan! ", null);
+		}
+	}
+	
+	public void visit(MultCondFact multCondFact) {
+		Struct f1 = multCondFact.getExpr().struct;
+		Struct f2 = multCondFact.getExpr().struct;
+		
+		if (!f1.compatibleWith(f2)) {
+			report_error("Greska na liniji "+ multCondFact.getLine()+" : nekompatibilni tipovi u logickom izrazu!", null);
+		}
+		multCondFact.struct = boolType;
+	}
+	
+	public void visit(MulOpFactorTerm mulOpFactorTerm) {
+		Struct t1 = mulOpFactorTerm.getTerm().struct;
+		Struct t2 = mulOpFactorTerm.getFactor().struct;
+		
+		if (!t1.equals(Tab.intType) || !t2.equals(Tab.intType)) {
+			report_error("Greska na liniji "+ mulOpFactorTerm.getLine()+" : cinioci moraju biti celobrojnog tipa!", null);
+		}
+		mulOpFactorTerm.struct = Tab.intType;
 	}
 	
 	public boolean passed() {

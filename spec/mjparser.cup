@@ -6,6 +6,7 @@ import rs.ac.bg.etf.pp1.ast.*;
 
 parser code {:
 
+	boolean errorDetected;
 	Logger log = Logger.getLogger(getClass());
    
    
@@ -25,6 +26,7 @@ parser code {:
     }
 
     public void report_error(String message, Object info) {
+    	errorDetected = true;
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append(" na liniji ").append(((Symbol)info).left);
@@ -34,6 +36,10 @@ parser code {:
 
 :}
 
+
+init with {:
+	errorDetected = false;
+:}
 
 scan with {:
 	Symbol s = this.getScanner().next_token();
@@ -52,14 +58,19 @@ terminal Integer NUMBER;
 terminal Character CHARACTER;
 terminal Boolean BOOLEAN;
 
-nonterminal Program, DeclList, MethodDeclList, Type, AssignOp, Constant, MethodDecl;
+nonterminal DeclList, MethodDeclList, AssignOp, Constant;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
-nonterminal Statement, StatementList, Matched, Unmatched, Expr, Condition, RelOp, AddOp, MulOp, Term, Factor, CondTerm, CondFact;
-nonterminal Designator, Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
+nonterminal Statement, StatementList, Matched, Unmatched, Condition, RelOp, AddOp, MulOp, CondTerm, CondFact;
+nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
+
+nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, Designator;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr;
 
 precedence left ELSE; 
 
-Program ::= (Program) PROG IDENT:progName DeclList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROG ProgName:p DeclList LBRACE MethodDeclList RBRACE;
+
+ProgName ::= (ProgName) IDENT:progName;
 
 DeclList ::= (DeclListConst) DeclList ConstDeclSemi
 			|
@@ -119,9 +130,13 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 				(NoMethodDeclarations) /* epsilon */
 				;
 				
-MethodDecl ::= (MethodDeclType) Type IDENT:methodName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
+MethodDecl ::= (MethodDecl) MethodTypeName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE;
+			
+MethodTypeName ::= (MethodTypeName) MethodType:retType IDENT:methodName;
+			
+MethodType ::= (MethodTypeNotVoid) Type
 			|
-			(MethodDeclVoid) VOID IDENT:methodName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
+			(MethodTypeVoid) VOID
 			;
 			
 StatementList ::= (Statements) StatementList Statement
@@ -217,7 +232,7 @@ CondFact ::= (MultCondFact) Expr RelOp Expr
 			(SingleCondFact) Expr
 			;
 			
-Expr ::= (AddOpTermExpr) Term AddOp Term
+Expr ::= (AddOpTermExpr) Expr AddOp Term
 		|
 		(TermExprMinus) MINUS Term
 		|
@@ -229,7 +244,9 @@ Term ::= (MulOpFactorTerm) Factor MulOp Factor
 		(FactorTerm) Factor
 		;
 		
-Factor ::= (DesignatorFactorParens) Designator OptActParsInParens
+Factor ::= (FuncCall) Designator LPAREN ActPars RPAREN
+		|
+		(FactorVar) Designator
 		|
 		(NumConst) NUMBER
 		|
@@ -239,17 +256,14 @@ Factor ::= (DesignatorFactorParens) Designator OptActParsInParens
 		|
 		(ConstrFactorMatrix) NEW Type LBRACKET Expr RBRACKET LBRACKET Expr RBRACKET 
 		|
-		(ConstrFactorArr) NEW Type LBRACKET Expr RBRACKET 
+		(ConstrFactorArr) NEW Type LBRACKET Expr RBRACKET
 		|
 		(ConstrFactorActPars) NEW Type OptActParsInParens
 		|
 		(FactorExpr) LPAREN Expr RPAREN
 		;
 		
-OptActParsInParens ::= (OptActParams) LPAREN ActPars RPAREN
-					|
-					(NoOptActParams) /* epsilon */
-					;
+OptActParsInParens ::= (OptActParams) LPAREN ActPars RPAREN;
 							
 ActPars ::= (ActualParams) ActParsList
 			|

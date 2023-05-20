@@ -4,7 +4,7 @@ program MJProgram
 	int x; int y;
 	bool isFalse;
 	const char ch = 'a';
-	// const char notCorrect = 2;
+	const char notCorrect = 2; // error
 	int arr[];
 	int matrix[][];
 	int matrixError[][];
@@ -61,6 +61,11 @@ program MJProgram
 		foo(1, 2, new int[2], new char[2][2], 'a', true); // error
 		
 		x = k();
+		
+		arr = arr.map(x => 2 * x);
+		matrix = arr.map(x => 2 * x); // error
+		arr = matrix.map(x => 2 * x); // error
+		arr = arr.map(isFalse => 2 * isFalse); // error
 		
 		return 1;
 	}

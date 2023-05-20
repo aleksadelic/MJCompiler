@@ -261,7 +261,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 					null);
 		}
 	}
-	
+
 	public void visit(DesignatorStmtFuncCall funcCall) {
 		Obj func = funcCall.getDesignator().obj;
 		if (func.getKind() == Obj.Meth) {
@@ -286,17 +286,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		checkDesignatorKind(designator, designatorStmtDecr);
 	}
 
-	public void checkDesignatorKind(Obj designator, DesignatorStatement designatorStmt) {
+	public void checkDesignatorKind(Obj designator, SyntaxNode node) {
 		if (designator.getKind() != Obj.Var) {
-			report_error("Greska na liniji " + designatorStmt.getLine() + " : "
+			report_error("Greska na liniji " + node.getLine() + " : "
 					+ "designator mora biti promenljiva ili element niza ili matrice! ", null);
 		}
 	}
 
-	public void checkDesignatorType(Obj designator, DesignatorStatement designatorStmt) {
+	public void checkDesignatorType(Obj designator, SyntaxNode node) {
 		if (designator.getType().getKind() != Struct.Int) {
-			report_error(
-					"Greska na liniji " + designatorStmt.getLine() + " : " + "designator mora biti celobrojnog tipa! ",
+			report_error("Greska na liniji " + node.getLine() + " : " + "designator mora biti celobrojnog tipa! ",
 					null);
 		}
 	}
@@ -321,15 +320,32 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(ReadStmt readStmt) {
-
+		Obj designator = readStmt.getDesignator().obj;
+		checkDesignatorKind(designator, readStmt);
+		int kind = designator.getType().getKind();
+		if (kind != Struct.Int && kind != Struct.Char && kind != Struct.Bool) {
+			report_error(
+					"Greska na liniji " + readStmt.getLine() + " : " + "designator mora biti tipa int, char ili bool! ",
+					null);
+		}
 	}
 
 	public void visit(PrintStmt printStmt) {
+		int kind = printStmt.getExpr().struct.getKind();
 
+		if (kind != Struct.Int && kind != Struct.Char && kind != Struct.Bool) {
+			report_error("Greska na liniji " + printStmt.getLine() + " : " + "expr mora biti tipa int, char ili bool! ",
+					null);
+		}
 	}
 
 	public void visit(PrintStmtNum printStmt) {
+		int kind = printStmt.getExpr().struct.getKind();
 
+		if (kind != Struct.Int && kind != Struct.Char && kind != Struct.Bool) {
+			report_error("Greska na liniji " + printStmt.getLine() + " : " + "expr mora biti tipa int, char ili bool! ",
+					null);
+		}
 	}
 
 	public void visit(ReturnExpr returnExpr) {
@@ -375,6 +391,31 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public void visit(WhileStmt whileStmt) {
 		checkConditionType(whileStmt.getCondition());
+	}
+
+	public void visit(MapStmt mapStmt) {
+		report_info("Prepoznat poziv map funkcije", mapStmt);
+		Struct desType = mapStmt.getDesignator().obj.getType();
+		Struct srcType = mapStmt.getDesignator1().obj.getType();
+		if (desType.getKind() != Struct.Array || desType.getElemType().getKind() == Struct.Array
+				|| srcType.getKind() != Struct.Array || srcType.getElemType().getKind() == Struct.Array) {
+			report_error(
+					"Greska na liniji " + mapStmt.getLine() + " : " + "designator mora biti jednodimenzionalni niz! ",
+					null);
+		} else {
+			String ident = mapStmt.getVarName();
+			Obj var = Tab.find(ident);
+
+			if (var.getKind() != Obj.Var) {
+				report_error("Greska na liniji " + mapStmt.getLine() + " : "
+						+ "ident mora biti lokalna ili globalna promeljiva! ", null);
+			}
+
+			if (var.getType().getKind() != srcType.getElemType().getKind()) {
+				report_error("Greska na liniji " + mapStmt.getLine() + " : "
+						+ "ident mora biti istog tipa kao i element niza! ", null);
+			}
+		}
 	}
 
 	private void checkConditionType(Condition condition) {
@@ -474,13 +515,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			funcCall.struct = Tab.noType;
 		}
 	}
-	
+
 	private void checkActualParams(Obj func, SyntaxNode funcCall) {
 		List<Struct> formPars = funcPars.get(func);
 		if (formPars == null) {
 			if (currActPars != null && currActPars.size() != 0) {
 				report_error("Greska na liniji " + funcCall.getLine()
-				+ " : broj stvarnih parametara nije jednak broju formalnih parametara!", null);
+						+ " : broj stvarnih parametara nije jednak broju formalnih parametara!", null);
 			}
 			currActPars = null;
 			return;

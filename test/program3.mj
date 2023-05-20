@@ -3,17 +3,22 @@ program MJProgram
 	const bool isTrue = true;
 	int x; int y;
 	bool isFalse;
-	const char c = 'a';
+	const char ch = 'a';
 	// const char notCorrect = 2;
 	int arr[];
 	int matrix[][];
 	int matrixError[][];
+	int matrix[][];
 
 {
 
 	int k () int c; {
 		c = 2;
 		return c+2;
+	}
+	
+	int foo (int a, int b, int arr[], int mat[][], char c, bool flag) {
+		return 0;
 	}
 
 	int main() {
@@ -50,6 +55,12 @@ program MJProgram
 		}
 		
 		break; // error
+		
+		foo(1, 2, new int[2], new int[2][2], 'a', true); // ok
+		foo(1, 2, new int[2], new int[2][2], 'a'); // error
+		foo(1, 2, new int[2], new char[2][2], 'a', true); // error
+		
+		x = k();
 		
 		return 1;
 	}

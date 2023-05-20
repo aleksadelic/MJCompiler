@@ -1,5 +1,10 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.ast.*;
@@ -17,6 +22,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	private Struct boolType = Tab.find("bool").getType();
 	private Struct currentType = null;
+
+	private Map<Obj, List<Struct>> funcPars = new HashMap<>();
+	private List<Struct> currFormPars = null;
+	private List<Struct> currActPars = null;
 
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
@@ -47,28 +56,33 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(VarDeclHead varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
 		currentType = varDecl.getType().struct;
 	}
 
 	public void visit(VarDeclChain varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
 	}
 
 	public void visit(VarDeclHeadArr varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
 		currentType = varDecl.getType().struct;
 	}
 
 	public void visit(VarDeclChainArr varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
 	}
 
 	public void visit(VarDeclHeadMatrix varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(),
 				new Struct(Struct.Array, new Struct(Struct.Array, varDecl.getType().struct)));
@@ -76,6 +90,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(VarDeclChainMatrix varDecl) {
+		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
 		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(),
 				new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
@@ -85,7 +100,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		currentType = null;
 	}
 
+	private void checkIfNameIsDeclared(String name, SyntaxNode node) {
+		if (Tab.find(name) != Tab.noObj) {
+			report_error("Greska na liniji " + node.getLine() + " : " + "ime " + name + " je vec deklarisano! ", null);
+		}
+	}
+
 	public void visit(ConstDeclHead constDecl) {
+		checkIfNameIsDeclared(constDecl.getConstName(), constDecl);
 		if (!constDecl.getType().struct.equals(constDecl.getConstant().struct)) {
 			report_error("Greska na liniji " + constDecl.getLine() + " : "
 					+ "nekompatibilni tipovi pri deklaraciji konstante! ", null);
@@ -98,6 +120,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(ConstDeclChain constDecl) {
+		checkIfNameIsDeclared(constDecl.getConstName(), constDecl);
 		if (!currentType.equals(constDecl.getConstant().struct)) {
 			report_error("Greska na liniji " + constDecl.getLine() + " : "
 					+ "nekompatibilni tipovi pri deklaraciji konstante! ", null);
@@ -156,9 +179,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(MethodTypeName methodTypeName) {
+		checkIfNameIsDeclared(methodTypeName.getMethodName(), methodTypeName);
 		currentMethod = Tab.insert(Obj.Meth, methodTypeName.getMethodName(), methodTypeName.getMethodType().struct);
 		methodTypeName.obj = currentMethod;
 		Tab.openScope();
+		currFormPars = new ArrayList<>();
 		report_info("Obradjuje se funkcija " + methodTypeName.getMethodName(), methodTypeName);
 	}
 
@@ -172,6 +197,47 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 		returnFound = false;
 		currentMethod = null;
+		currFormPars = null;
+	}
+
+	public void visit(FormParamsList formParamsList) {
+		funcPars.put(currentMethod, currFormPars);
+		for (Struct s : currFormPars) {
+			report_info(s.getKind() + "", null);
+		}
+	}
+
+	public void visit(FormParsChainMatrix formParsChainMatrix) {
+		currFormPars.add(new Struct(Struct.Array, new Struct(Struct.Array, formParsChainMatrix.getType().struct)));
+	}
+
+	public void visit(FormParsChainArr formParsChainArr) {
+		currFormPars.add(new Struct(Struct.Array, formParsChainArr.getType().struct));
+	}
+
+	public void visit(FormParsChain formParsChain) {
+		currFormPars.add(formParsChain.getType().struct);
+	}
+
+	public void visit(FormParsHeadMatrix formParsHeadMatrix) {
+		currFormPars.add(new Struct(Struct.Array, new Struct(Struct.Array, formParsHeadMatrix.getType().struct)));
+	}
+
+	public void visit(FormParsHeadArr formParsHeadArr) {
+		currFormPars.add(new Struct(Struct.Array, formParsHeadArr.getType().struct));
+	}
+
+	public void visit(FormParsHead formParsHead) {
+		currFormPars.add(formParsHead.getType().struct);
+	}
+
+	public void visit(MultActPars multActPars) {
+		currActPars.add(multActPars.getExpr().struct);
+	}
+
+	public void visit(SingleActPar singleActPar) {
+		currActPars = new ArrayList<>();
+		currActPars.add(singleActPar.getExpr().struct);
 	}
 
 	public void visit(NumConst numConst) {
@@ -192,6 +258,18 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (!assignment.getExpr().struct.assignableTo(assignment.getDesignator().obj.getType())) {
 			report_error(
 					"Greska na liniji " + assignment.getLine() + " : " + "nekompatibilni tipovi u dodeli vrednosti! ",
+					null);
+		}
+	}
+	
+	public void visit(DesignatorStmtFuncCall funcCall) {
+		Obj func = funcCall.getDesignator().obj;
+		if (func.getKind() == Obj.Meth) {
+			report_info("Pronadjen poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
+
+			checkActualParams(func, funcCall);
+		} else {
+			report_error("Greska na liniji " + funcCall.getLine() + " : ime " + func.getName() + " nije funkcija!",
 					null);
 		}
 	}
@@ -305,14 +383,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 
-	public void visit(ActualParams actualParams) {
-
-	}
-
-	public void visit(NoActualParams noActualParams) {
-
-	}
-
 	public void visit(MultCondition multCondition) {
 		multCondition.struct = multCondition.getCondition().struct;
 	}
@@ -391,16 +461,46 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		factorConst.struct = factorConst.getConstant().struct;
 	}
 
-	public void visit(FuncCall funcCall) {
+	public void visit(FactorFuncCall funcCall) {
 		Obj func = funcCall.getDesignator().obj;
 		if (func.getKind() == Obj.Meth) {
 			report_info("Pronadjen poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
 			funcCall.struct = func.getType();
+
+			checkActualParams(func, funcCall);
 		} else {
 			report_error("Greska na liniji " + funcCall.getLine() + " : ime " + func.getName() + " nije funkcija!",
 					null);
 			funcCall.struct = Tab.noType;
 		}
+	}
+	
+	private void checkActualParams(Obj func, SyntaxNode funcCall) {
+		List<Struct> formPars = funcPars.get(func);
+		if (formPars == null) {
+			if (currActPars != null && currActPars.size() != 0) {
+				report_error("Greska na liniji " + funcCall.getLine()
+				+ " : broj stvarnih parametara nije jednak broju formalnih parametara!", null);
+			}
+			currActPars = null;
+			return;
+		}
+
+		if (formPars.size() != currActPars.size()) {
+			report_error("Greska na liniji " + funcCall.getLine()
+					+ " : broj stvarnih parametara nije jednak broju formalnih parametara!", null);
+		}
+
+		for (int i = 0; i < currActPars.size(); i++) {
+			Struct act = currActPars.get(i);
+			Struct form = formPars.get(i);
+
+			if (!act.equals(form)) {
+				report_error("Greska na liniji " + funcCall.getLine()
+						+ " : tip stvarnog parametra ne odgovara tipu formalnog parametra!", null);
+			}
+		}
+		currActPars = null;
 	}
 
 	public void visit(ConstrFactorArr constrFactorArr) {
@@ -443,9 +543,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + designatorMatrix.getLine() + " : "
 						+ "indeks niza mora biti celobrojnog tipa! ", null);
 			}
-			designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(), designatorMatrix.obj.getType().getElemType());
+			designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
+					designatorMatrix.obj.getType().getElemType());
 			if (designatorMatrix.obj.getType().getKind() == Struct.Array) {
-				designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(), designatorMatrix.obj.getType().getElemType());
+				designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
+						designatorMatrix.obj.getType().getElemType());
 			}
 		}
 	}
@@ -465,7 +567,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + designatorArr.getLine() + " : "
 						+ "indeks niza mora biti celobrojnog tipa! ", null);
 			}
-			designatorArr.obj = new Obj(Obj.Var, designatorArr.obj.getName(), designatorArr.obj.getType().getElemType());
+			designatorArr.obj = new Obj(Obj.Var, designatorArr.obj.getName(),
+					designatorArr.obj.getType().getElemType());
 		}
 	}
 

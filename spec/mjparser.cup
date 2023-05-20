@@ -207,7 +207,7 @@ DesignatorStatement ::= (DesignatorStmtAssign) Designator AssignOp Expr
 					(ErrorAssign) error:l
 					{: parser.report_error("Sintaksna greska pri konstrukciji iskaza dodele u liniji " + lleft, null); :} 
 					|
-					(DesignatorStmtActPar) Designator OptActParsInParens
+					(DesignatorStmtFuncCall) Designator OptActParsInParens
 					|
 					(DesignatorStmtIncr) Designator INCREMENT
 					|
@@ -244,7 +244,7 @@ Term ::= (MulOpFactorTerm) Term:f1 MulOp Factor:f2
 		(FactorTerm) Factor
 		;
 		
-Factor ::= (FuncCall) Designator LPAREN ActPars RPAREN
+Factor ::= (FactorFuncCall) Designator LPAREN ActPars RPAREN
 		|
 		(FactorVar) Designator
 		|

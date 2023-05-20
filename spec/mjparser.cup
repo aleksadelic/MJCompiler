@@ -271,9 +271,9 @@ ActParsList ::= (MultActPars) ActParsList COMMA Expr
 			(SingleActPar) Expr
 			; 
 
-Designator ::= (DesignatorChainIdent) Designator DOT IDENT
+Designator ::= (DesignatorMatrix) IDENT:name LBRACKET Expr RBRACKET LBRACKET Expr RBRACKET
 			|
-			(DesignatorChainExpr) Designator LBRACKET Expr RBRACKET
+			(DesignatorArr) IDENT:name LBRACKET Expr RBRACKET
 			|
 			(DesignatorIdent) IDENT:name
 			;

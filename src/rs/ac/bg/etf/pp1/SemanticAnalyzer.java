@@ -20,12 +20,50 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	Logger log = Logger.getLogger(getClass());
 
-	private Struct boolType = Tab.find("bool").getType();
+	private Struct boolType = null;
 	private Struct currentType = null;
 
-	private Map<Obj, List<Struct>> funcPars = new HashMap<>();
+	private Map<Obj, List<Struct>> funcPars = null;
 	private List<Struct> currFormPars = null;
 	private List<Struct> currActPars = null;
+	
+	private Map<Integer, String> objKindMap = null;
+	private Map<Integer, String> typeKindMap = null;
+	
+	public SemanticAnalyzer() {
+		boolType = Tab.find("bool").getType();
+		
+		funcPars = new HashMap<>();
+		List<Struct> chrPars = new ArrayList<>();
+		List<Struct> ordPars = new ArrayList<>();
+		List<Struct> lenPars = new ArrayList<>();
+		chrPars.add(Tab.intType);
+		ordPars.add(Tab.charType);
+		lenPars.add(new Struct(Struct.Array));
+		
+		funcPars.put(Tab.chrObj, chrPars);
+		funcPars.put(Tab.ordObj, ordPars);
+		funcPars.put(Tab.lenObj, lenPars);
+		
+		objKindMap = new HashMap<>();
+		objKindMap.put(0, "Con");
+		objKindMap.put(1, "Var");
+		objKindMap.put(2, "Type");
+		objKindMap.put(3, "Meth");
+		objKindMap.put(4, "Fld");
+		objKindMap.put(5, "Elem");
+		objKindMap.put(6, "Prog");
+		
+		typeKindMap = new HashMap<>();
+		typeKindMap.put(0, "None");
+		typeKindMap.put(1, "Int");
+		typeKindMap.put(2, "Char");
+		typeKindMap.put(3, "Array");
+		typeKindMap.put(4, "Class");
+		typeKindMap.put(5, "Bool");
+		typeKindMap.put(6, "Enum");
+		typeKindMap.put(7, "Interface");
+	}
 
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
@@ -460,6 +498,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void visit(TermExprMinus termExprMinus) {
+		termExprMinus.struct = termExprMinus.getTerm().struct;
 		if (!termExprMinus.struct.equals(Tab.intType)) {
 			report_error("Greska na liniji " + termExprMinus.getLine() + " : " + "izraz mora biti celobrojan! ", null);
 		}
@@ -590,6 +629,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
 						designatorMatrix.obj.getType().getElemType());
 			}
+			
+			reportMatrixElemAcces(obj, designatorMatrix);
+			reportDetectedSymbol(obj, designatorMatrix);
 		}
 	}
 
@@ -610,6 +652,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 			designatorArr.obj = new Obj(Obj.Var, designatorArr.obj.getName(),
 					designatorArr.obj.getType().getElemType());
+			
+			reportArrayElemAcces(obj, designatorArr);
+			reportDetectedSymbol(obj, designatorArr);
 		}
 	}
 
@@ -619,7 +664,41 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName()
 					+ " nije deklarisano!", designator);
+		} else {
+			reportDetectedSymbol(obj, designator);
 		}
+		
+	}
+	
+	private void reportDetectedSymbol(Obj obj, SyntaxNode node) {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("Pretraga na " + node.getLine());
+		sb.append("(" + obj.getName() + "), nadjeno ");
+		sb.append(objKindMap.get(obj.getKind()) + " " + obj.getName() + ": ");
+		
+		Struct type = obj.getType();
+		if (type.getKind() == Struct.Array) {
+			Struct elemType = type.getElemType();
+			if (elemType.getKind() == Struct.Array) {
+				sb.append("Matrix of " + typeKindMap.get(elemType.getElemType().getKind()));
+			} else {
+				sb.append("Array of " + typeKindMap.get(elemType.getKind()));
+			}
+		} else {
+			sb.append(typeKindMap.get(type.getKind()));
+		}
+		sb.append(", " + obj.getAdr() + ", " + obj.getLevel());
+		
+		report_info(sb.toString(), null);
+	}
+	
+	private void reportArrayElemAcces(Obj obj, SyntaxNode node) {
+		report_info("Pronadjen pristup elementu niza " + obj.getName(), node);
+	}
+	
+	private void reportMatrixElemAcces( Obj obj, SyntaxNode node) {
+		report_info("Pronadjen pristup elementu matrice " + obj.getName(), node);
 	}
 
 	public boolean passed() {

@@ -52,7 +52,7 @@ public class Compiler {
 			prog.traverseBottomUp(v);
 
 			log.info("===================================");
-			Tab.dump();
+			tsdump();
 			
 			if (!p.errorDetected && v.passed()) {
 				log.info("Parsiranje uspesno zavrseno!");
@@ -69,6 +69,10 @@ public class Compiler {
 				}
 		}
 
+	}
+	
+	public static void tsdump() {
+		Tab.dump();
 	}
 
 }

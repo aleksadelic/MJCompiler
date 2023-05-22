@@ -2,8 +2,10 @@ package rs.ac.bg.etf.pp1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -26,13 +28,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private Map<Obj, List<Struct>> funcPars = null;
 	private List<Struct> currFormPars = null;
 	private List<Struct> currActPars = null;
-	
+
 	private Map<Integer, String> objKindMap = null;
 	private Map<Integer, String> typeKindMap = null;
 	
+	private Set<String> currFormParsSet = null;
+
 	public SemanticAnalyzer() {
 		boolType = Tab.find("bool").getType();
-		
+
 		funcPars = new HashMap<>();
 		List<Struct> chrPars = new ArrayList<>();
 		List<Struct> ordPars = new ArrayList<>();
@@ -40,11 +44,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		chrPars.add(Tab.intType);
 		ordPars.add(Tab.charType);
 		lenPars.add(new Struct(Struct.Array));
-		
+
 		funcPars.put(Tab.chrObj, chrPars);
 		funcPars.put(Tab.ordObj, ordPars);
 		funcPars.put(Tab.lenObj, lenPars);
 		
+		currFormParsSet = new HashSet<>();
+
 		objKindMap = new HashMap<>();
 		objKindMap.put(0, "Con");
 		objKindMap.put(1, "Var");
@@ -53,7 +59,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		objKindMap.put(4, "Fld");
 		objKindMap.put(5, "Elem");
 		objKindMap.put(6, "Prog");
-		
+
 		typeKindMap = new HashMap<>();
 		typeKindMap.put(0, "None");
 		typeKindMap.put(1, "Int");
@@ -227,7 +233,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public void visit(MethodDecl methodDecl) {
 		if (returnFound == false && currentMethod.getType() != Tab.noType) {
-			report_error("Semanticka greska na liniji " + methodDecl.getLine() + ": funkcija " + currentMethod.getName()
+			report_error("Greska na liniji " + methodDecl.getLine() + ": funkcija " + currentMethod.getName()
 					+ " nema return iskaz!", null);
 		}
 		Tab.chainLocalSymbols(currentMethod);
@@ -236,37 +242,74 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		returnFound = false;
 		currentMethod = null;
 		currFormPars = null;
+		currFormParsSet.clear();
 	}
 
 	public void visit(FormParamsList formParamsList) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Pronadjeni formalni parametri funkcije " + currentMethod.getName() + " tipa: ");
 		funcPars.put(currentMethod, currFormPars);
-		for (Struct s : currFormPars) {
-			report_info(s.getKind() + "", null);
+		boolean isFirst = true;
+		for (Struct type : currFormPars) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sb.append(", ");
+			}
+			if (type.getKind() == Struct.Array) {
+				Struct elemType = type.getElemType();
+				if (elemType.getKind() == Struct.Array) {
+					sb.append("Matrix of " + typeKindMap.get(elemType.getElemType().getKind()));
+				} else {
+					sb.append("Array of " + typeKindMap.get(elemType.getKind()));
+				}
+			} else {
+				sb.append(typeKindMap.get(type.getKind()));
+			}
 		}
+		report_info(sb.toString(), formParamsList);
 	}
 
 	public void visit(FormParsChainMatrix formParsChainMatrix) {
-		currFormPars.add(new Struct(Struct.Array, new Struct(Struct.Array, formParsChainMatrix.getType().struct)));
+		Struct type = new Struct(Struct.Array, new Struct(Struct.Array, formParsChainMatrix.getType().struct));
+		Tab.insert(Obj.Var, formParsChainMatrix.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsChainMatrix.getParName());
 	}
 
 	public void visit(FormParsChainArr formParsChainArr) {
-		currFormPars.add(new Struct(Struct.Array, formParsChainArr.getType().struct));
+		Struct type = new Struct(Struct.Array, formParsChainArr.getType().struct);
+		Tab.insert(Obj.Var, formParsChainArr.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsChainArr.getParName());
 	}
 
 	public void visit(FormParsChain formParsChain) {
-		currFormPars.add(formParsChain.getType().struct);
+		Struct type = formParsChain.getType().struct;
+		Tab.insert(Obj.Var, formParsChain.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsChain.getParName());
 	}
 
 	public void visit(FormParsHeadMatrix formParsHeadMatrix) {
-		currFormPars.add(new Struct(Struct.Array, new Struct(Struct.Array, formParsHeadMatrix.getType().struct)));
+		Struct type = new Struct(Struct.Array, new Struct(Struct.Array, formParsHeadMatrix.getType().struct));
+		Tab.insert(Obj.Var, formParsHeadMatrix.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsHeadMatrix.getParName());
 	}
 
 	public void visit(FormParsHeadArr formParsHeadArr) {
-		currFormPars.add(new Struct(Struct.Array, formParsHeadArr.getType().struct));
+		Struct type = new Struct(Struct.Array, formParsHeadArr.getType().struct);
+		Tab.insert(Obj.Var, formParsHeadArr.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsHeadArr.getParName());
 	}
 
 	public void visit(FormParsHead formParsHead) {
-		currFormPars.add(formParsHead.getType().struct);
+		Struct type = formParsHead.getType().struct;
+		Tab.insert(Obj.Var, formParsHead.getParName(), type);
+		currFormPars.add(type);
+		currFormParsSet.add(formParsHead.getParName());
 	}
 
 	public void visit(MultActPars multActPars) {
@@ -303,7 +346,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(DesignatorStmtFuncCall funcCall) {
 		Obj func = funcCall.getDesignator().obj;
 		if (func.getKind() == Obj.Meth) {
-			report_info("Pronadjen poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
+			report_info("\tDetektovan poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
 
 			checkActualParams(func, funcCall);
 		} else {
@@ -544,7 +587,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(FactorFuncCall funcCall) {
 		Obj func = funcCall.getDesignator().obj;
 		if (func.getKind() == Obj.Meth) {
-			report_info("Pronadjen poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
+			report_info("\tDetektovan poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
 			funcCall.struct = func.getType();
 
 			checkActualParams(func, funcCall);
@@ -629,7 +672,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
 						designatorMatrix.obj.getType().getElemType());
 			}
-			
+
 			reportMatrixElemAcces(obj, designatorMatrix);
 			reportDetectedSymbol(obj, designatorMatrix);
 		}
@@ -652,7 +695,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 			designatorArr.obj = new Obj(Obj.Var, designatorArr.obj.getName(),
 					designatorArr.obj.getType().getElemType());
-			
+
 			reportArrayElemAcces(obj, designatorArr);
 			reportDetectedSymbol(obj, designatorArr);
 		}
@@ -667,16 +710,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		} else {
 			reportDetectedSymbol(obj, designator);
 		}
-		
+
 	}
-	
+
 	private void reportDetectedSymbol(Obj obj, SyntaxNode node) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append("Pretraga na " + node.getLine());
 		sb.append("(" + obj.getName() + "), nadjeno ");
 		sb.append(objKindMap.get(obj.getKind()) + " " + obj.getName() + ": ");
-		
+
 		Struct type = obj.getType();
 		if (type.getKind() == Struct.Array) {
 			Struct elemType = type.getElemType();
@@ -689,16 +732,28 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			sb.append(typeKindMap.get(type.getKind()));
 		}
 		sb.append(", " + obj.getAdr() + ", " + obj.getLevel());
-		
+
 		report_info(sb.toString(), null);
+		
+		if (obj.getKind() == Obj.Var) {
+			if (obj.getLevel() == 0) {
+				report_info("\tDetektovana globalna promenljiva " + obj.getName(), node);
+			} else if (currFormParsSet.contains(obj.getName())) {
+				report_info("\tDetektovana formalni parametar " + obj.getName(), node);
+			} else {
+				report_info("\tDetektovana lokalna promenljiva " + obj.getName(), node);
+			}
+		} else if (obj.getKind() == Obj.Con) {
+			report_info("\tDetektovana simbolicka konstanta" + obj.getName(), node);
+		}
 	}
-	
+
 	private void reportArrayElemAcces(Obj obj, SyntaxNode node) {
-		report_info("Pronadjen pristup elementu niza " + obj.getName(), node);
+		report_info("\tDetektovan pristup elementu niza " + obj.getName(), node);
 	}
-	
-	private void reportMatrixElemAcces( Obj obj, SyntaxNode node) {
-		report_info("Pronadjen pristup elementu matrice " + obj.getName(), node);
+
+	private void reportMatrixElemAcces(Obj obj, SyntaxNode node) {
+		report_info("\tDetektovan pristup elementu matrice " + obj.getName(), node);
 	}
 
 	public boolean passed() {

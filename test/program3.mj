@@ -18,7 +18,9 @@ program MJProgram
 	}
 	
 	int foo (int a, int b, int arr[], int mat[][], char c, bool flag) {
-		return 0;
+		mat = new int[3][3];
+		a = a + b;
+		return a;
 	}
 
 	int main() {

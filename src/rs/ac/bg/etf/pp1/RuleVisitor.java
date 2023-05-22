@@ -7,7 +7,6 @@ public class RuleVisitor extends VisitorAdaptor {
 
 	int varDeclCount = 0;
 	int constDeclCount = 0;
-	int classDeclCount = 0;
 
 	int varCount = 0;
 	int constCount = 0;
@@ -58,11 +57,6 @@ public class RuleVisitor extends VisitorAdaptor {
 
 	public void visit(ConstDeclChain varDecl) {
 		constCount++;
-	}
-
-	public void visit(ClassDecl classDecl) {
-		classDeclCount++;
-		log.info(classDecl.getLine() + " Prepoznata deklaracija klase");
 	}
 
 	public void visit(FormParsHead formPar) {

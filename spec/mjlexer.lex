@@ -42,7 +42,6 @@ import java_cup.runtime.Symbol;
 "void" 		{ return new_symbol(sym.VOID, yytext()); }
 "const" 	{ return new_symbol(sym.CONST, yytext()); }
 "new" 		{ return new_symbol(sym.NEW, yytext()); }
-"class" 	{ return new_symbol(sym.CLASS, yytext()); }
 "if" 		{ return new_symbol(sym.IF, yytext()); }
 "else" 		{ return new_symbol(sym.ELSE, yytext()); }
 "while" 	{ return new_symbol(sym.WHILE, yytext()); }

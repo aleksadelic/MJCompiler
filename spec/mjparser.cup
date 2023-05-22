@@ -50,7 +50,7 @@ scan with {:
 
 
 terminal PROG, LBRACE, RBRACE, SEMI, LPAREN, RPAREN, EQUAL, RETURN, COMMA, PRINT, VOID, CONST, LBRACKET, RBRACKET, DOT;
-terminal CLASS, NEW, IF, ELSE, WHILE, BREAK, CONTINUE, READ;
+terminal NEW, IF, ELSE, WHILE, BREAK, CONTINUE, READ;
 terminal AND, OR, EQ, NEQ, GT, GE, LT, LE;
 terminal PLUS, MINUS, MUL, DIV, MOD, INCREMENT, DECREMENT, MAP, ARROW;
 terminal String IDENT;
@@ -59,7 +59,7 @@ terminal Character CHARACTER;
 terminal Boolean BOOLEAN;
 
 nonterminal DeclList, MethodDeclList, AssignOp;
-nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, ClassDecl, VarDeclList, ClassMethodDeclList, FormPars, FormParsList;
+nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, VarDeclList, FormPars, FormParsList;
 nonterminal Statement, StatementList, Matched, Unmatched, RelOp, AddOp, MulOp;
 nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
 
@@ -75,8 +75,6 @@ ProgName ::= (ProgName) IDENT:progName;
 DeclList ::= (DeclListConst) DeclList ConstDeclSemi
 			|
 			(DeclListVar) DeclList VarDeclSemi
-			|
-			(DeclListClass) DeclList ClassDecl
 			|
 			/* epsilon */
 			;
@@ -105,13 +103,6 @@ VarDecl ::= (VarDeclChainMatrix) VarDecl COMMA IDENT:varName LBRACKET RBRACKET L
 				(ErrorVarDecl) error:l
 				{: parser.report_error("Sintaksna greska pri deklaracije promenljive u liniji " + lleft, null); :} 
 				;
-
-ClassDecl ::= (ClassDecl) CLASS IDENT:className LBRACE VarDeclList ClassMethodDeclList RBRACE;
-
-ClassMethodDeclList ::= (ClassMethodDeclarations) LBRACE MethodDeclList RBRACE
-					|
-					(NoClassMethodDeclarations) /* epsilon */
-					;
 
 VarDeclList ::= (VarDeclarations) VarDeclList VarDeclSemi
 				|
@@ -151,7 +142,7 @@ Statement ::= (MatchedStatement) Matched
 
 Unmatched ::= (UnmatchedIf) IF LPAREN Condition RPAREN Statement
 			|
-			(UnmatchedIfElse) IF LPAREN Condition RPAREN ELSE Unmatched
+			(UnmatchedIfElse) IF LPAREN Condition RPAREN Matched ELSE Unmatched
 			;
 				
 Matched ::= (DesignatorStmt) DesignatorStatement SEMI
@@ -253,8 +244,6 @@ Factor ::= (FactorFuncCall) Designator LPAREN ActPars RPAREN
 		(ConstrFactorMatrix) NEW Type LBRACKET Expr RBRACKET LBRACKET Expr RBRACKET 
 		|
 		(ConstrFactorArr) NEW Type LBRACKET Expr RBRACKET
-		|
-		(ConstrFactorActPars) NEW Type OptActParsInParens
 		|
 		(FactorExpr) LPAREN Expr RPAREN
 		;

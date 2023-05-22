@@ -1,29 +1,29 @@
 program MJProgram
-	int a+, var1;
+	int var1, a;
 	int b[][], c[];
 	const int x = 1;
 	const int y = 2, z = 3;
 	
 	char c1;
-	boolean b1;
-	
-	class A {
-		char c;
-		boolean flag;
-		int arr[];	
-	}
-	
-	class B {
-		int a;
-		
-		{
-		void foo1(int par1, int par2[]) { a--; }
-		
-		int foo2() { a++; }
-		}
-	}
+	bool b1;
 	
 {
+
+	void fooMap()
+	int arr[];
+	{
+		arr = c.map(a => 2 * a);
+	}
+	
+	int foo(int a, int b[], char c[][], bool isGood)
+	int locVar, locVar2;
+	char locVar3;
+	{
+		locVar = 0;
+		locVar++;
+		return 1 + 1;
+	}
+
 	void main() {
 		b = new int[5][5];
 		c = new int[10];
@@ -36,20 +36,5 @@ program MJProgram
 		}
 		
 		fooMap();
-	}
-	
-	void fooMap()
-	int arr[];
-	{
-		arr = c.map(a => 2 * a);
-	}
-	
-	int foo(int a, int b[], char c[][], boolean isGood)
-	int locVar, locVar2;
-	char locVar3;
-	{
-		locVar = 0;
-		locVar++;
-		return 1 + 1;
 	}
 }

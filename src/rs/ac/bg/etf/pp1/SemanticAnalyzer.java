@@ -106,33 +106,33 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(VarDeclHead varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
+		Tab.insert(Obj.Var, varDecl.getVarName(), varDecl.getType().struct);
 		currentType = varDecl.getType().struct;
 	}
 
 	public void visit(VarDeclChain varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana promenljiva " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
+		Tab.insert(Obj.Var, varDecl.getVarName(), currentType);
 	}
 
 	public void visit(VarDeclHeadArr varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
+		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
 		currentType = varDecl.getType().struct;
 	}
 
 	public void visit(VarDeclChainArr varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
+		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
 	}
 
 	public void visit(VarDeclHeadMatrix varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(),
+		Tab.insert(Obj.Var, varDecl.getVarName(),
 				new Struct(Struct.Array, new Struct(Struct.Array, varDecl.getType().struct)));
 		currentType = varDecl.getType().struct;
 	}
@@ -140,7 +140,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(VarDeclChainMatrix varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
-		Obj varNode = Tab.insert(Obj.Var, varDecl.getVarName(),
+		Tab.insert(Obj.Var, varDecl.getVarName(),
 				new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
 	}
 

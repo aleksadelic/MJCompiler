@@ -94,6 +94,10 @@ int a, curr;
 		niz2 = 0;
 		niz = niz.map(curr => curr * curr);
 		print(niz2);
+		
+		if (niz == niz) {
+			a++;
+		}
 	
 	}
 }

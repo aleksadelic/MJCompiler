@@ -17,6 +17,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	Obj currentMethod = null;
 	boolean returnFound = false;
+	boolean mainFound = false;
 	boolean errorDetected = false;
 	int nVars;
 
@@ -97,6 +98,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		nVars = Tab.currentScope.getnVars();
 		Tab.chainLocalSymbols(program.getProgName().obj);
 		Tab.closeScope();
+		if (!mainFound) {
+			report_error("Greska: Program mora sadrzati main funkciju!", null);
+		}
 	}
 
 	public void visit(VarDeclHead varDecl) {
@@ -229,6 +233,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Tab.openScope();
 		currFormPars = new ArrayList<>();
 		report_info("Obradjuje se funkcija " + methodTypeName.getMethodName(), methodTypeName);
+		
+		if (methodTypeName.getMethodName().equals("main")) {
+			mainFound = true;
+			if (!methodTypeName.getMethodType().struct.equals(Tab.noType))
+				report_error("Greska na liniji " + methodTypeName.getLine() + ": main funkcija mora biti void tipa!", null);
+		}
 	}
 
 	public void visit(MethodDecl methodDecl) {
@@ -268,6 +278,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 		}
 		report_info(sb.toString(), formParamsList);
+		
+		if (currentMethod.getName().equals("main") && currFormPars.size() != 0) {
+			report_error("Greska na liniji " + formParamsList.getLine() + ": main funkcija ne sme imati argumente!", null);
+		}
 	}
 
 	public void visit(FormParsChainMatrix formParsChainMatrix) {
@@ -375,7 +389,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void checkDesignatorType(Obj designator, SyntaxNode node) {
-		if (designator.getType().getKind() != Struct.Int) {
+		if (!designator.getType().equals(Tab.intType)) {
 			report_error("Greska na liniji " + node.getLine() + " : " + "designator mora biti celobrojnog tipa! ",
 					null);
 		}
@@ -528,6 +542,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (!f1.compatibleWith(f2)) {
 			report_error("Greska na liniji " + multCondFact.getLine() + " : nekompatibilni tipovi u logickom izrazu!",
 					null);
+		} else {
+			if (f1.getKind() == Struct.Array && !(multCondFact.getRelOp() instanceof RelOpEq) && !(multCondFact.getRelOp() instanceof RelOpNeq)) {
+				report_error("Greska na liniji " + multCondFact.getLine() + " : uz promenljive tipa niza mogu se koristiti samo == i != !",
+						null);
+			}
 		}
 		multCondFact.struct = boolType;
 	}
@@ -551,7 +570,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Struct te = addOpTermExpr.getExpr().struct;
 		Struct t = addOpTermExpr.getTerm().struct;
 
-		if (te.equals(t) && te == Tab.intType) {
+		if (te.equals(t) && te.equals(Tab.intType)) {
 			addOpTermExpr.struct = te;
 		} else {
 			report_error(
@@ -618,7 +637,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			Struct act = currActPars.get(i);
 			Struct form = formPars.get(i);
 
-			if (!act.equals(form)) {
+			if (!act.assignableTo(form)) {
 				report_error("Greska na liniji " + funcCall.getLine()
 						+ " : tip stvarnog parametra ne odgovara tipu formalnog parametra!", null);
 			}

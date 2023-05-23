@@ -9,6 +9,8 @@ program MJProgram
 	int matrix[][];
 	int matrixError[][];
 	int matrix[][];
+	
+	bool matrixBool[][];
 
 {
 

@@ -62,14 +62,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		objKindMap.put(6, "Prog");
 
 		typeKindMap = new HashMap<>();
-		typeKindMap.put(0, "None");
-		typeKindMap.put(1, "Int");
-		typeKindMap.put(2, "Char");
-		typeKindMap.put(3, "Array");
-		typeKindMap.put(4, "Class");
-		typeKindMap.put(5, "Bool");
-		typeKindMap.put(6, "Enum");
-		typeKindMap.put(7, "Interface");
+		typeKindMap.put(0, "none");
+		typeKindMap.put(1, "int");
+		typeKindMap.put(2, "char");
+		typeKindMap.put(3, "array");
+		typeKindMap.put(4, "class");
+		typeKindMap.put(5, "bool");
+		typeKindMap.put(6, "enum");
+		typeKindMap.put(7, "interface");
 	}
 
 	public void report_error(String message, SyntaxNode info) {

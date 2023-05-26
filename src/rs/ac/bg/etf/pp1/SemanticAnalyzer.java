@@ -32,7 +32,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	private Map<Integer, String> objKindMap = null;
 	private Map<Integer, String> typeKindMap = null;
-	
+
 	private Set<String> currFormParsSet = null;
 
 	public SemanticAnalyzer() {
@@ -49,7 +49,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		funcPars.put(Tab.chrObj, chrPars);
 		funcPars.put(Tab.ordObj, ordPars);
 		funcPars.put(Tab.lenObj, lenPars);
-		
+
 		currFormParsSet = new HashSet<>();
 
 		objKindMap = new HashMap<>();
@@ -140,8 +140,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(VarDeclChainMatrix varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
-		Tab.insert(Obj.Var, varDecl.getVarName(),
-				new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
+		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
 	}
 
 	public void visit(VarDeclSemi varDeclSemi) {
@@ -233,11 +232,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Tab.openScope();
 		currFormPars = new ArrayList<>();
 		report_info("Obradjuje se funkcija " + methodTypeName.getMethodName(), methodTypeName);
-		
+
 		if (methodTypeName.getMethodName().equals("main")) {
 			mainFound = true;
 			if (!methodTypeName.getMethodType().struct.equals(Tab.noType))
-				report_error("Greska na liniji " + methodTypeName.getLine() + ": main funkcija mora biti void tipa!", null);
+				report_error("Greska na liniji " + methodTypeName.getLine() + ": main funkcija mora biti void tipa!",
+						null);
 		}
 	}
 
@@ -278,9 +278,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 		}
 		report_info(sb.toString(), formParamsList);
-		
+
 		if (currentMethod.getName().equals("main") && currFormPars.size() != 0) {
-			report_error("Greska na liniji " + formParamsList.getLine() + ": main funkcija ne sme imati argumente!", null);
+			report_error("Greska na liniji " + formParamsList.getLine() + ": main funkcija ne sme imati argumente!",
+					null);
 		}
 	}
 
@@ -543,9 +544,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Greska na liniji " + multCondFact.getLine() + " : nekompatibilni tipovi u logickom izrazu!",
 					null);
 		} else {
-			if (f1.getKind() == Struct.Array && !(multCondFact.getRelOp() instanceof RelOpEq) && !(multCondFact.getRelOp() instanceof RelOpNeq)) {
-				report_error("Greska na liniji " + multCondFact.getLine() + " : uz promenljive tipa niza mogu se koristiti samo == i != !",
-						null);
+			if (f1.getKind() == Struct.Array && !(multCondFact.getRelOp() instanceof RelOpEq)
+					&& !(multCondFact.getRelOp() instanceof RelOpNeq)) {
+				report_error("Greska na liniji " + multCondFact.getLine()
+						+ " : uz promenljive tipa niza mogu se koristiti samo == i != !", null);
 			}
 		}
 		multCondFact.struct = boolType;
@@ -607,8 +609,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj func = funcCall.getDesignator().obj;
 		if (func.getKind() == Obj.Meth) {
 			report_info("\tDetektovan poziv funkcije " + func.getName() + " na liniji " + funcCall.getLine(), null);
+			if (func.getType().equals(Tab.noType)) {
+				report_error("Greska na liniji " + funcCall.getLine() + " : funkcija " + func.getName()
+						+ " se ne moze koristiti u izrazima jer je void tipa!", null);
+			}
 			funcCall.struct = func.getType();
-
 			checkActualParams(func, funcCall);
 		} else {
 			report_error("Greska na liniji " + funcCall.getLine() + " : ime " + func.getName() + " nije funkcija!",
@@ -628,9 +633,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			return;
 		}
 
-		if (formPars.size() != currActPars.size()) {
+		if (currActPars == null || formPars.size() != currActPars.size()) {
 			report_error("Greska na liniji " + funcCall.getLine()
 					+ " : broj stvarnih parametara nije jednak broju formalnih parametara!", null);
+			return;
 		}
 
 		for (int i = 0; i < currActPars.size(); i++) {
@@ -753,7 +759,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		sb.append(", " + obj.getAdr() + ", " + obj.getLevel());
 
 		report_info(sb.toString(), null);
-		
+
 		if (obj.getKind() == Obj.Var) {
 			if (obj.getLevel() == 0) {
 				report_info("\tDetektovana globalna promenljiva " + obj.getName(), node);

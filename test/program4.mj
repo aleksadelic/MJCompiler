@@ -1,5 +1,6 @@
 program MJProgram
 	int x; int y;
+	int arr[];
 {
 
 	int k (int a, int b) int c, d; int niz[]; {
@@ -57,5 +58,15 @@ program MJProgram
 		foo(3, x);
 		
 		print('a');
+		
+		arr = new int[3];
+		
+		arr[0] = 5;
+		arr[1] = arr[0];
+		arr[2] = arr[1] + arr[0];
+		
+		print(arr[0]);
+		print(arr[1]);
+		print(arr[2]);
 	}
 }

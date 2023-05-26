@@ -45,6 +45,8 @@ program MJProgram
 		matrix[1][2]--;
 		matrix[1]++; // error
 		
+		arr[1][2]++; // error
+		
 		arr[1] = new int[3][4]; // error
 		matrix = new int[3]; // error
 		

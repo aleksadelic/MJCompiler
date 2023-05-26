@@ -1,5 +1,10 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
 import rs.ac.bg.etf.pp1.CounterVisitor.FormParamCounter;
 import rs.ac.bg.etf.pp1.CounterVisitor.VarCounter;
 import rs.ac.bg.etf.pp1.ast.AddOp;
@@ -8,10 +13,17 @@ import rs.ac.bg.etf.pp1.ast.AddOpPlus;
 import rs.ac.bg.etf.pp1.ast.AddOpTermExpr;
 import rs.ac.bg.etf.pp1.ast.BoolConst;
 import rs.ac.bg.etf.pp1.ast.CharConst;
+import rs.ac.bg.etf.pp1.ast.ConstrFactorArr;
+import rs.ac.bg.etf.pp1.ast.ConstrFactorMatrix;
+import rs.ac.bg.etf.pp1.ast.Designator;
+import rs.ac.bg.etf.pp1.ast.DesignatorArr;
+import rs.ac.bg.etf.pp1.ast.DesignatorIdent;
+import rs.ac.bg.etf.pp1.ast.DesignatorMatrix;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtAssign;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtDecr;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtFuncCall;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtIncr;
+import rs.ac.bg.etf.pp1.ast.Expr;
 import rs.ac.bg.etf.pp1.ast.FactorFuncCall;
 import rs.ac.bg.etf.pp1.ast.FactorVar;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
@@ -23,6 +35,8 @@ import rs.ac.bg.etf.pp1.ast.MulOpMod;
 import rs.ac.bg.etf.pp1.ast.MulOpMul;
 import rs.ac.bg.etf.pp1.ast.NumConst;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
+import rs.ac.bg.etf.pp1.ast.ProgName;
+import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.ast.ReturnExpr;
 import rs.ac.bg.etf.pp1.ast.ReturnNoExpr;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
@@ -33,11 +47,19 @@ import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
 
 public class CodeGenerator extends VisitorAdaptor {
+	
+	Logger log = Logger.getLogger(getClass());
 
 	private int mainPc;
 
+	private HashMap<String, Obj> arrMap = null;
+	
 	public int getMainPc() {
 		return mainPc;
+	}
+	
+	public CodeGenerator(HashMap<String, Obj> arrMap) {
+		this.arrMap = arrMap;
 	}
 
 	public void visit(MethodTypeName methodTypeName) {
@@ -45,7 +67,7 @@ public class CodeGenerator extends VisitorAdaptor {
 			mainPc = Code.pc;
 		}
 		methodTypeName.obj.setAdr(Code.pc);
-		
+
 		// Collect arguments and local variables
 		SyntaxNode methodNode = methodTypeName.getParent();
 
@@ -67,7 +89,12 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(DesignatorStmtAssign designatorStmtAssign) {
-		Code.store(designatorStmtAssign.getDesignator().obj);
+		Designator des = designatorStmtAssign.getDesignator();
+		if (des.obj.getKind() == Obj.Var) {
+			Code.store(designatorStmtAssign.getDesignator().obj);
+		} else {
+			Code.put(Code.astore);
+		}
 	}
 
 	public void visit(DesignatorStmtFuncCall designatorStmtFuncCall) {
@@ -105,7 +132,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.exit);
 		Code.put(Code.return_);
 	}
-	
+
 	public void visit(PrintStmt printStmt) {
 		if (printStmt.getExpr().struct.equals(Tab.intType)) {
 			Code.loadConst(5);
@@ -150,9 +177,13 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	public void visit(FactorVar factorVar) {
 		SyntaxNode parent = factorVar.getParent();
-
+		
 		if (parent.getClass() != DesignatorStmtAssign.class && parent.getClass() != DesignatorStmtFuncCall.class) {
-			Code.load(factorVar.getDesignator().obj);
+			if (factorVar.getDesignator().obj.getKind() == Obj.Var) {
+				Code.load(factorVar.getDesignator().obj);
+			} else {
+				Code.put(Code.aload);
+			}
 		}
 	}
 
@@ -178,6 +209,30 @@ public class CodeGenerator extends VisitorAdaptor {
 		con.setAdr(boolConst.getBool() ? 1 : 0);
 
 		Code.load(con);
+	}
+
+	public void visit(ConstrFactorArr constrFactorArr) {
+		Code.put(Code.newarray);
+		if (constrFactorArr.getType().struct.equals(Tab.intType)) {
+			Code.put(1);
+		} else {
+			Code.put(0);
+		}
+	}
+
+	public void visit(ConstrFactorMatrix constrFactorMatrix) {
+
+	}
+
+	public void visit(DesignatorArr designatorArr) {
+		Obj obj = arrMap.get(designatorArr.obj.getName());
+		Code.load(obj);
+		Code.put(Code.dup_x1);
+		Code.put(Code.pop);
+	}
+
+	public void visit(DesignatorMatrix designatorMatrix) {
+		
 	}
 
 }

@@ -34,6 +34,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private Map<Integer, String> typeKindMap = null;
 
 	private Set<String> currFormParsSet = null;
+	
+	private HashMap<String, Obj> arrMap = null;
 
 	public SemanticAnalyzer() {
 		boolType = Tab.find("bool").getType();
@@ -51,6 +53,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		funcPars.put(Tab.lenObj, lenPars);
 
 		currFormParsSet = new HashSet<>();
+		
+		arrMap = new HashMap<>();
 
 		objKindMap = new HashMap<>();
 		objKindMap.put(0, "Con");
@@ -70,6 +74,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		typeKindMap.put(5, "bool");
 		typeKindMap.put(6, "enum");
 		typeKindMap.put(7, "interface");
+	}
+	
+	public HashMap<String, Obj> getArrMap() {
+		return arrMap;
 	}
 
 	public void report_error(String message, SyntaxNode info) {
@@ -119,28 +127,32 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(VarDeclHeadArr varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
-		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
+		Obj obj = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, varDecl.getType().struct));
 		currentType = varDecl.getType().struct;
+		arrMap.put(obj.getName(), obj);
 	}
 
 	public void visit(VarDeclChainArr varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisan niz " + varDecl.getVarName(), varDecl);
-		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
+		Obj obj = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, currentType));
+		arrMap.put(obj.getName(), obj);
 	}
 
 	public void visit(VarDeclHeadMatrix varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
-		Tab.insert(Obj.Var, varDecl.getVarName(),
+		Obj obj = Tab.insert(Obj.Var, varDecl.getVarName(),
 				new Struct(Struct.Array, new Struct(Struct.Array, varDecl.getType().struct)));
 		currentType = varDecl.getType().struct;
+		arrMap.put(obj.getName(), obj);
 	}
 
 	public void visit(VarDeclChainMatrix varDecl) {
 		checkIfNameIsDeclared(varDecl.getVarName(), varDecl);
 		report_info("Deklarisana matrica " + varDecl.getVarName(), varDecl);
-		Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
+		Obj obj = Tab.insert(Obj.Var, varDecl.getVarName(), new Struct(Struct.Array, new Struct(Struct.Array, currentType)));
+		arrMap.put(obj.getName(), obj);
 	}
 
 	public void visit(VarDeclSemi varDeclSemi) {
@@ -383,7 +395,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	public void checkDesignatorKind(Obj designator, SyntaxNode node) {
-		if (designator.getKind() != Obj.Var) {
+		if (designator.getKind() != Obj.Var && designator.getKind() != Obj.Elem) {
 			report_error("Greska na liniji " + node.getLine() + " : "
 					+ "designator mora biti promenljiva ili element niza ili matrice! ", null);
 		}
@@ -677,13 +689,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public void visit(DesignatorMatrix designatorMatrix) {
 		Obj obj = Tab.find(designatorMatrix.getName());
-		designatorMatrix.obj = obj;
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designatorMatrix.getLine() + " : ime " + designatorMatrix.getName()
 					+ " nije deklarisano!", designatorMatrix);
+			designatorMatrix.obj = obj;
 		} else {
-			if (designatorMatrix.obj.getType().getKind() != Struct.Array) {
-				report_error("Greska na liniji " + designatorMatrix.getLine() + " : " + "designator mora biti niz! ",
+			if (obj.getType().getKind() != Struct.Array || obj.getType().getElemType().getKind() != Struct.Array) {
+				report_error("Greska na liniji " + designatorMatrix.getLine() + " : " + "designator mora biti matrica! ",
 						null);
 			}
 			if (!designatorMatrix.getExpr().struct.equals(Tab.intType)
@@ -691,11 +703,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + designatorMatrix.getLine() + " : "
 						+ "indeks niza mora biti celobrojnog tipa! ", null);
 			}
-			designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
-					designatorMatrix.obj.getType().getElemType());
+			designatorMatrix.obj = new Obj(Obj.Elem, obj.getName(), obj.getType().getElemType());
 			if (designatorMatrix.obj.getType().getKind() == Struct.Array) {
-				designatorMatrix.obj = new Obj(Obj.Var, designatorMatrix.obj.getName(),
-						designatorMatrix.obj.getType().getElemType());
+				designatorMatrix.obj = new Obj(Obj.Elem, obj.getName(), designatorMatrix.obj.getType().getElemType());
 			}
 
 			reportMatrixElemAcces(obj, designatorMatrix);
@@ -705,12 +715,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public void visit(DesignatorArr designatorArr) {
 		Obj obj = Tab.find(designatorArr.getName());
-		designatorArr.obj = obj;
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designatorArr.getLine() + " : ime " + designatorArr.getName()
 					+ " nije deklarisano!", designatorArr);
+			designatorArr.obj = obj;
 		} else {
-			if (designatorArr.obj.getType().getKind() != Struct.Array) {
+			if (obj.getType().getKind() != Struct.Array) {
 				report_error("Greska na liniji " + designatorArr.getLine() + " : " + "designator mora biti niz! ",
 						null);
 			}
@@ -718,8 +728,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + designatorArr.getLine() + " : "
 						+ "indeks niza mora biti celobrojnog tipa! ", null);
 			}
-			designatorArr.obj = new Obj(Obj.Var, designatorArr.obj.getName(),
-					designatorArr.obj.getType().getElemType());
+			designatorArr.obj = new Obj(Obj.Elem, obj.getName(), obj.getType().getElemType());
 
 			reportArrayElemAcces(obj, designatorArr);
 			reportDetectedSymbol(obj, designatorArr);

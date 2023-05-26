@@ -49,19 +49,19 @@ public class Compiler {
 			log.info("===================================");
 
 			// ispis prepoznatih programskih konstrukcija
-			SemanticAnalyzer v = new SemanticAnalyzer();
-			prog.traverseBottomUp(v);
+			SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+			prog.traverseBottomUp(semanticAnalyzer);
 
 			log.info("===================================");
 			tsdump();
 			
-			if (!p.errorDetected && v.passed()) {
+			if (!p.errorDetected && semanticAnalyzer.passed()) {
 				File objFile = new File("test/program.obj");
 				if (objFile.exists()) objFile.delete();
 				
-				CodeGenerator codeGenerator = new CodeGenerator();
+				CodeGenerator codeGenerator = new CodeGenerator(semanticAnalyzer.getArrMap());
 				prog.traverseBottomUp(codeGenerator);
-				Code.dataSize = v.nVars;
+				Code.dataSize = semanticAnalyzer.nVars;
 				Code.mainPc = codeGenerator.getMainPc();
 				Code.write(new FileOutputStream(objFile));
 				log.info("Parsiranje uspesno zavrseno!");

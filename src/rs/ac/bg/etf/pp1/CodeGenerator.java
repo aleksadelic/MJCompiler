@@ -42,6 +42,7 @@ import rs.ac.bg.etf.pp1.ast.NumConst;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ProgName;
 import rs.ac.bg.etf.pp1.ast.Program;
+import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.ReturnExpr;
 import rs.ac.bg.etf.pp1.ast.ReturnNoExpr;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
@@ -166,7 +167,39 @@ public class CodeGenerator extends VisitorAdaptor {
 		} else if (printStmt.getExpr().struct.equals(Tab.charType)) {
 			Code.loadConst(1);
 			Code.put(Code.bprint);
+		} else {
+			// Print boolean
+			Code.put(Code.dup);
+			Code.loadConst(0);
+			Code.putFalseJump(Code.eq, 0);
+			int patchAdr = Code.pc - 2;
+			String toWrite = "false";
+			for (char c: toWrite.toCharArray()) {
+				Code.loadConst(c);
+				Code.loadConst(1);
+				Code.put(Code.bprint);
+			}
+			Code.putJump(0);
+			int patchAdr2 = Code.pc - 2;
+			Code.fixup(patchAdr);
+			toWrite = "true";
+			for (char c: toWrite.toCharArray()) {
+				Code.loadConst(c);
+				Code.loadConst(1);
+				Code.put(Code.bprint);
+			}
+			Code.fixup(patchAdr2);
 		}
+	}
+	
+	public void visit(ReadStmt readStmt) {
+		Obj obj = readStmt.getDesignator().obj;
+		if (obj.getType().equals(Tab.charType)) {
+			Code.put(Code.bread);
+		} else {
+			Code.put(Code.read);
+		}
+		Code.store(obj);
 	}
 
 	public void visit(AddOpTermExpr addOpTermExpr) {

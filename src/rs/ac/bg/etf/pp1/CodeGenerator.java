@@ -1,6 +1,9 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -24,7 +27,9 @@ import rs.ac.bg.etf.pp1.ast.DesignatorStmtDecr;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtFuncCall;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtIncr;
 import rs.ac.bg.etf.pp1.ast.Expr;
+import rs.ac.bg.etf.pp1.ast.Factor;
 import rs.ac.bg.etf.pp1.ast.FactorFuncCall;
+import rs.ac.bg.etf.pp1.ast.FactorTerm;
 import rs.ac.bg.etf.pp1.ast.FactorVar;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodTypeName;
@@ -40,11 +45,14 @@ import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.ast.ReturnExpr;
 import rs.ac.bg.etf.pp1.ast.ReturnNoExpr;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
+import rs.ac.bg.etf.pp1.ast.Term;
+import rs.ac.bg.etf.pp1.ast.TermExpr;
 import rs.ac.bg.etf.pp1.ast.TermExprMinus;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
+import rs.etf.pp1.symboltable.concepts.Struct;
 
 public class CodeGenerator extends VisitorAdaptor {
 	
@@ -54,12 +62,18 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	private HashMap<String, Obj> arrMap = null;
 	
+	private Obj currMatrix = null;
+ 	
 	public int getMainPc() {
 		return mainPc;
 	}
 	
 	public CodeGenerator(HashMap<String, Obj> arrMap) {
 		this.arrMap = arrMap;
+	}
+	
+	public void visit(Program program) {
+		Tab.dump(new MyDumpSymbolTableVisitor());
 	}
 
 	public void visit(MethodTypeName methodTypeName) {
@@ -108,19 +122,31 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(DesignatorStmtIncr designatorStmtIncr) {
-		Obj obj = designatorStmtIncr.getDesignator().obj;
-		Code.load(obj);
-		Code.loadConst(1);
-		Code.put(Code.add);
-		Code.store(obj);
+		processIncrDecrStmt(designatorStmtIncr.getDesignator().obj, 1);
 	}
 
 	public void visit(DesignatorStmtDecr designatorStmtDecr) {
-		Obj obj = designatorStmtDecr.getDesignator().obj;
-		Code.load(obj);
-		Code.loadConst(-1);
-		Code.put(Code.add);
-		Code.store(obj);
+		processIncrDecrStmt(designatorStmtDecr.getDesignator().obj, -1);
+	}
+	
+	private void processIncrDecrStmt(Obj desObj, int num) {
+		if (desObj.getKind() == Obj.Var) {
+			Obj obj = desObj;
+			Code.load(obj);
+			Code.loadConst(num);
+			Code.put(Code.add);
+			Code.store(obj);
+		} else {
+			Obj obj = arrMap.get(desObj.getName());
+			Code.put(Code.dup_x1);
+			Code.put(Code.aload);
+			Code.loadConst(num);
+			Code.put(Code.add);
+			Code.load(obj);
+			Code.put(Code.dup_x2);
+			Code.put(Code.pop);
+			Code.put(Code.astore);
+		}
 	}
 
 	public void visit(ReturnExpr returnExpr) {
@@ -221,7 +247,25 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(ConstrFactorMatrix constrFactorMatrix) {
-
+		Code.put(Code.dup);
+		Obj obj = new Obj(Obj.Var, currMatrix.getName() + "N", Tab.intType);
+		Code.store(obj);
+		Tab.currentScope.addToLocals(obj);
+		Code.put(Code.mul);
+		Code.put(Code.newarray);
+		if (constrFactorMatrix.getType().struct.equals(Tab.intType)) {
+			Code.put(1);
+		} else {
+			Code.put(0);
+		}
+		
+	}
+	
+	public void visit(DesignatorIdent designator) {
+		Obj obj = designator.obj;
+		if (obj.getType().getKind() == Struct.Array && obj.getType().getElemType().getKind() == Struct.Array) {
+			currMatrix = obj;
+		}
 	}
 
 	public void visit(DesignatorArr designatorArr) {
@@ -232,7 +276,16 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(DesignatorMatrix designatorMatrix) {
+		Obj obj = arrMap.get(designatorMatrix.obj.getName());
 		
+		Code.load(obj);
+		Code.put(Code.dup_x2);
+		Code.put(Code.pop);
+		Code.put(Code.dup_x1);
+		Code.put(Code.pop);
+		Code.load(Tab.find(obj.getName() + "M"));
+		Code.put(Code.mul);
+		Code.put(Code.add);
 	}
 
 }

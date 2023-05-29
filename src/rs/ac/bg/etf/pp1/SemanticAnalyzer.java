@@ -160,8 +160,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	private void checkIfNameIsDeclared(String name, SyntaxNode node) {
-		if (Tab.find(name) != Tab.noObj) {
-			report_error("Greska na liniji " + node.getLine() + " : " + "ime " + name + " je vec deklarisano! ", null);
+		Obj resultObj = null;
+		Scope s = Tab.currentScope;
+		if (s.getLocals() != null) {
+			resultObj = s.getLocals().searchKey(name);
+			if (resultObj != null) {
+				report_error("Greska na liniji " + node.getLine() + " : " + "ime " + name + " je vec deklarisano! ", null);
+			}
 		}
 	}
 

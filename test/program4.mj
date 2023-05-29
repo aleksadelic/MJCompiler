@@ -2,7 +2,7 @@ program MJProgram
 	int x; int y;
 	int arr[];
 	int matrix[][];
-	char znak;
+	char c;
 	bool flag;
 {
 
@@ -12,7 +12,7 @@ program MJProgram
 		return c + a + b + 2;
 	}
 	
-	void foo(int a, int b) {
+	void foo(int a, int b) int c; {
 		print(a + b);
 	}
 
@@ -118,8 +118,8 @@ program MJProgram
 		read(x);
 		print(x);
 		
-		read(znak);
-		print(znak);
+		read(c);
+		print(c);
 		
 		flag = true;
 		print(flag);

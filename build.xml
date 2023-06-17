@@ -12,6 +12,9 @@
 				<exclude name="MyDumpSymbolTableVisitor.java" />
 				<exclude name="CodeGenerator.java" />
 				<exclude name="CounterVisitor.java" />
+				<exclude name="BranchContext.java" />
+				<exclude name="IfBranchContext.java" />
+				<exclude name="WhileBranchContext.java" />
 			</fileset>
 		</delete>
 		<delete>

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
@@ -15,9 +16,11 @@ import rs.ac.bg.etf.pp1.ast.AddOpMinus;
 import rs.ac.bg.etf.pp1.ast.AddOpPlus;
 import rs.ac.bg.etf.pp1.ast.AddOpTermExpr;
 import rs.ac.bg.etf.pp1.ast.BoolConst;
+import rs.ac.bg.etf.pp1.ast.BreakStmt;
 import rs.ac.bg.etf.pp1.ast.CharConst;
 import rs.ac.bg.etf.pp1.ast.ConstrFactorArr;
 import rs.ac.bg.etf.pp1.ast.ConstrFactorMatrix;
+import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.Designator;
 import rs.ac.bg.etf.pp1.ast.DesignatorArr;
 import rs.ac.bg.etf.pp1.ast.DesignatorIdent;
@@ -26,11 +29,14 @@ import rs.ac.bg.etf.pp1.ast.DesignatorStmtAssign;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtDecr;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtFuncCall;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtIncr;
+import rs.ac.bg.etf.pp1.ast.ElseEntry;
 import rs.ac.bg.etf.pp1.ast.Expr;
 import rs.ac.bg.etf.pp1.ast.Factor;
 import rs.ac.bg.etf.pp1.ast.FactorFuncCall;
 import rs.ac.bg.etf.pp1.ast.FactorTerm;
 import rs.ac.bg.etf.pp1.ast.FactorVar;
+import rs.ac.bg.etf.pp1.ast.IfEntry;
+import rs.ac.bg.etf.pp1.ast.MatchedIfElse;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodTypeName;
 import rs.ac.bg.etf.pp1.ast.MulOp;
@@ -38,18 +44,36 @@ import rs.ac.bg.etf.pp1.ast.MulOpDiv;
 import rs.ac.bg.etf.pp1.ast.MulOpFactorTerm;
 import rs.ac.bg.etf.pp1.ast.MulOpMod;
 import rs.ac.bg.etf.pp1.ast.MulOpMul;
+import rs.ac.bg.etf.pp1.ast.MultCondFact;
+import rs.ac.bg.etf.pp1.ast.MultCondTerm;
+import rs.ac.bg.etf.pp1.ast.MultCondition;
 import rs.ac.bg.etf.pp1.ast.NumConst;
+import rs.ac.bg.etf.pp1.ast.Or;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ProgName;
 import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
+import rs.ac.bg.etf.pp1.ast.RelOp;
+import rs.ac.bg.etf.pp1.ast.RelOpEq;
+import rs.ac.bg.etf.pp1.ast.RelOpGe;
+import rs.ac.bg.etf.pp1.ast.RelOpGt;
+import rs.ac.bg.etf.pp1.ast.RelOpLe;
+import rs.ac.bg.etf.pp1.ast.RelOpLt;
+import rs.ac.bg.etf.pp1.ast.RelOpNeq;
 import rs.ac.bg.etf.pp1.ast.ReturnExpr;
 import rs.ac.bg.etf.pp1.ast.ReturnNoExpr;
+import rs.ac.bg.etf.pp1.ast.SingleCondFact;
+import rs.ac.bg.etf.pp1.ast.SingleCondTerm;
+import rs.ac.bg.etf.pp1.ast.SingleCondition;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.Term;
 import rs.ac.bg.etf.pp1.ast.TermExpr;
 import rs.ac.bg.etf.pp1.ast.TermExprMinus;
+import rs.ac.bg.etf.pp1.ast.UnmatchedIf;
+import rs.ac.bg.etf.pp1.ast.UnmatchedIfElse;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
+import rs.ac.bg.etf.pp1.ast.WhileEntry;
+import rs.ac.bg.etf.pp1.ast.WhileStmt;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
@@ -64,6 +88,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	private HashMap<String, Obj> arrMap = null;
 	
 	private Obj currMatrix = null;
+	
+	private Stack<BranchContext> contextStack = new Stack<>();
  	
 	public int getMainPc() {
 		return mainPc;
@@ -200,6 +226,139 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.put(Code.read);
 		}
 		Code.store(obj);
+	}
+	
+	public void visit(UnmatchedIf unmatchedIf) {
+		Code.fixup(((IfBranchContext) contextStack.pop()).patchAdrs.getLast());
+	}
+	
+	public void visit(UnmatchedIfElse unmatchedIfElse) {
+		Code.fixup(((IfBranchContext) contextStack.pop()).patchAdrThenEnd);
+	}
+	
+	public void visit(MatchedIfElse matchedIfElse) {
+		Code.fixup(((IfBranchContext) contextStack.pop()).patchAdrThenEnd);
+	}
+		
+	public void visit(IfEntry ifEntry) {
+		contextStack.push(new IfBranchContext());
+	}
+	
+	public void visit(ElseEntry elseEntry) {
+		Code.putJump(0);
+		IfBranchContext context = (IfBranchContext) contextStack.peek();
+		context.patchAdrThenEnd = Code.pc - 2;
+		
+		if (context.patchAdrs.size() != 0) {
+			for (int i = context.fixed; i < context.patchAdrs.size(); i++) {
+				Code.fixup(context.patchAdrs.get(i));
+				context.fixed++;
+			}
+		}
+	}
+	
+	public void visit(WhileStmt whileStmt) {
+		WhileBranchContext context = (WhileBranchContext) contextStack.pop();
+		Code.putJump(context.adrWhileStart);
+		
+		if (context.patchAdrs.size() != 0) {
+			for (int i = context.fixed; i < context.patchAdrs.size(); i++) {
+				Code.fixup(context.patchAdrs.get(i));
+				context.fixed++;
+			}
+		}
+	}
+	
+	public void visit(WhileEntry whileEntry) {
+		WhileBranchContext context = new WhileBranchContext();
+		context.adrWhileStart = Code.pc;
+		contextStack.push(context);
+		
+	}
+	
+	public void visit(BreakStmt breakStmt) {
+		Code.putJump(0);
+		BranchContext context = contextStack.peek();
+		Stack<BranchContext> tempStack = new Stack<>();
+		while (!(context instanceof WhileBranchContext)) {
+			context = contextStack.pop();
+			tempStack.push(context);
+			context = contextStack.peek();
+		}
+		context.patchAdrs.add(Code.pc - 2);
+		while (!tempStack.isEmpty()) {
+			contextStack.push(tempStack.pop());
+		}
+	}
+	
+	public void visit(ContinueStmt continueStmt) {
+		BranchContext context = contextStack.peek();
+		Stack<BranchContext> tempStack = new Stack<>();
+		while (!(context instanceof WhileBranchContext)) {
+			context = contextStack.pop();
+			tempStack.push(context);
+			context = contextStack.peek();
+		}
+		Code.putJump(((WhileBranchContext) context).adrWhileStart);
+		
+		while (!tempStack.isEmpty()) {
+			contextStack.push(tempStack.pop());
+		}
+	}
+	
+	public void visit(SingleCondition singleCondition) {
+		BranchContext context = contextStack.peek();
+		for (int i = 0; i < context.patchAdrsThenStart.size(); i++) {
+			Code.fixup(context.patchAdrsThenStart.get(i));
+		}
+	}
+	
+	public void visit(MultCondition multCondition) {
+		BranchContext context = contextStack.peek();
+		for (int i = 0; i < context.patchAdrsThenStart.size(); i++) {
+			Code.fixup(context.patchAdrsThenStart.get(i));
+		}
+	}
+	
+	public void visit(Or or) {
+		BranchContext context = contextStack.peek();
+		Code.putJump(0);
+		context.patchAdrsThenStart.add(Code.pc - 2);
+		
+		if (context.patchAdrs.size() != 0) {
+			for (int i = context.fixed; i < context.patchAdrs.size(); i++) {
+				Code.fixup(context.patchAdrs.get(i));
+				context.fixed++;
+			}
+		}
+	}
+	
+	public void visit(SingleCondFact condFact) {
+		Code.loadConst(0);
+		Code.putFalseJump(Code.ne, 0);
+		
+		BranchContext context = contextStack.peek();
+		context.patchAdrs.add(Code.pc - 2);
+	}
+		
+	public void visit(MultCondFact condFact) {
+		RelOp op = condFact.getRelOp();
+		if (op instanceof RelOpEq) {
+			Code.putFalseJump(Code.eq, 0);
+		} else if (op instanceof RelOpNeq) {
+			Code.putFalseJump(Code.ne, 0);
+		} else if (op instanceof RelOpLt) {
+			Code.putFalseJump(Code.lt, 0);
+		} else if (op instanceof RelOpLe) {
+			Code.putFalseJump(Code.le, 0);
+		} else if (op instanceof RelOpGt) {
+			Code.putFalseJump(Code.gt, 0);
+		} else if (op instanceof RelOpGe) {
+			Code.putFalseJump(Code.ge, 0);
+		}
+		
+		BranchContext context = contextStack.peek();
+		context.patchAdrs.add(Code.pc - 2);
 	}
 
 	public void visit(AddOpTermExpr addOpTermExpr) {

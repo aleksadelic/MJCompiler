@@ -62,6 +62,7 @@ nonterminal DeclList, MethodDeclList, AssignOp;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, VarDeclList, FormPars, FormParsList;
 nonterminal Statement, StatementList, Matched, Unmatched, RelOp, AddOp, MulOp;
 nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
+nonterminal IfEntry, ElseEntry, WhileEntry, Or;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, Designator;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr, Constant, Condition, CondFact, CondTerm;
@@ -140,16 +141,16 @@ Statement ::= (MatchedStatement) Matched
 			(UnmatchedStatement) Unmatched
 			;
 
-Unmatched ::= (UnmatchedIf) IF LPAREN Condition RPAREN Statement
+Unmatched ::= (UnmatchedIf) IfEntry LPAREN Condition RPAREN Statement
 			|
-			(UnmatchedIfElse) IF LPAREN Condition RPAREN Matched ELSE Unmatched
+			(UnmatchedIfElse) IfEntry LPAREN Condition RPAREN Matched ElseEntry Unmatched
 			;
 				
 Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
-			(MatchedIfElse) IF LPAREN Condition RPAREN Matched ELSE Matched
+			(MatchedIfElse) IfEntry LPAREN Condition RPAREN Matched ElseEntry Matched
 			|
-			(WhileStmt) WHILE LPAREN Condition RPAREN Statement
+			(WhileStmt) WhileEntry LPAREN Condition RPAREN Statement
 			|
 			(ContinueStmt) CONTINUE SEMI
 			|
@@ -169,6 +170,12 @@ Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(MatchedStatements) LBRACE StatementList RBRACE
 			;
+			
+IfEntry ::= (IfEntry) IF;
+
+ElseEntry ::= (ElseEntry) ELSE;
+
+WhileEntry ::= (WhileEntry) WHILE;
 			
 FormPars ::= (FormParamsList) FormParsList
 			|
@@ -205,13 +212,15 @@ DesignatorStatement ::= (DesignatorStmtAssign) Designator AssignOp Expr
 					(DesignatorStmtDecr) Designator DECREMENT
 					;
 
-Condition ::= (MultCondition) Condition OR CondTerm
+Condition ::= (MultCondition) Condition Or CondTerm
 			|
 			(SingleCondition) CondTerm
 			|
 			(ErrorCond) error:l
 			{: parser.report_error("Sintaksna greska pri logickom izrazu u liniji " + lleft, null); :} 
 			;
+			
+Or ::= (Or) OR;
 			
 CondTerm ::= (MultCondTerm) CondTerm AND CondFact
 			|

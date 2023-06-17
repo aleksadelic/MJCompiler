@@ -127,5 +127,101 @@ program MJProgram
 		flag = false;
 		print(flag);
 		
+		x = 4;
+		if (x > 5) {
+			x = 10;
+		} else {
+			x = x + 2;
+			
+			if (1 == 0) {
+				x = x - 1;
+			} else {
+				x = x + 19;
+			}
+			
+		}
+		
+		print(x);
+		
+		x = 0;
+		if (x) {
+			print(33);
+		} else {
+			print(44);
+		}
+		
+		x = 3;
+		
+		if (x > 1 && x != 5) {
+			print(555);
+		}
+		
+		
+		x = 4;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 7;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 22;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 27;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 44;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 50;
+		if (x > 0 && x < 5 || x > 20 && x < 25 || x > 40 && x < 45) {
+			print(x);
+		} else {
+			print(x * 10);
+		}
+		
+		x = 0;
+		while (x < 5) {
+			x++;
+			if (x == 3) {
+				break;
+			}
+			print(x);
+		}
+		
+		x = 0;
+		while (x < 5) {
+			x++;
+			if (x == 3) {
+				continue;
+			}
+			print(x);
+		}
+		
+		x = 0;
+		while (x < 5 || x == 5) {
+			x++;
+			print(x);
+		}
+		
 	}
 }

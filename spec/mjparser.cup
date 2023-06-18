@@ -62,7 +62,7 @@ nonterminal DeclList, MethodDeclList, AssignOp;
 nonterminal ConstDecl, ConstDeclSemi, VarDecl, VarDeclSemi, VarDeclList, FormPars, FormParsList;
 nonterminal Statement, StatementList, Matched, Unmatched, RelOp, AddOp, MulOp;
 nonterminal Label, ActPars, ActParsList, OptActParsInParens, DesignatorStatement;
-nonterminal IfEntry, ElseEntry, WhileEntry, Or;
+nonterminal IfEntry, ElseEntry, WhileEntry, Or, MapEntry;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, Designator;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, MethodType, Term, Factor, Expr, Constant, Condition, CondFact, CondTerm;
@@ -166,7 +166,7 @@ Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(PrintStmt) PRINT LPAREN Expr RPAREN SEMI
 			|
-			(MapStmt) Designator AssignOp Designator DOT MAP LPAREN IDENT:varName ARROW Expr RPAREN SEMI
+			(MapStmt) Designator AssignOp MapEntry LPAREN Designator:varName ARROW Expr RPAREN SEMI
 			|
 			(MatchedStatements) LBRACE StatementList RBRACE
 			;
@@ -176,6 +176,8 @@ IfEntry ::= (IfEntry) IF;
 ElseEntry ::= (ElseEntry) ELSE;
 
 WhileEntry ::= (WhileEntry) WHILE;
+
+MapEntry ::= (MapEntry) Designator DOT MAP;
 			
 FormPars ::= (FormParamsList) FormParsList
 			|

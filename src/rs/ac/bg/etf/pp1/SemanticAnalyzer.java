@@ -509,14 +509,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(MapStmt mapStmt) {
 		report_info("Prepoznat poziv map funkcije", mapStmt);
 		Struct desType = mapStmt.getDesignator().obj.getType();
-		Struct srcType = mapStmt.getDesignator1().obj.getType();
+		Struct srcType = mapStmt.getMapEntry().getDesignator().obj.getType();
 		if (desType.getKind() != Struct.Array || desType.getElemType().getKind() == Struct.Array
 				|| srcType.getKind() != Struct.Array || srcType.getElemType().getKind() == Struct.Array) {
 			report_error(
 					"Greska na liniji " + mapStmt.getLine() + " : " + "designator mora biti jednodimenzionalni niz! ",
 					null);
 		} else {
-			String ident = mapStmt.getVarName();
+			String ident = mapStmt.getDesignator1().obj.getName();
 			Obj var = Tab.find(ident);
 
 			if (var.getKind() != Obj.Var) {

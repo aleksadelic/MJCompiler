@@ -36,6 +36,8 @@ import rs.ac.bg.etf.pp1.ast.FactorFuncCall;
 import rs.ac.bg.etf.pp1.ast.FactorTerm;
 import rs.ac.bg.etf.pp1.ast.FactorVar;
 import rs.ac.bg.etf.pp1.ast.IfEntry;
+import rs.ac.bg.etf.pp1.ast.MapEntry;
+import rs.ac.bg.etf.pp1.ast.MapStmt;
 import rs.ac.bg.etf.pp1.ast.MatchedIfElse;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodTypeName;
@@ -88,15 +90,28 @@ public class CodeGenerator extends VisitorAdaptor {
 	private HashMap<String, Obj> arrMap = null;
 	
 	private Obj currMatrix = null;
-	
+	private Obj arrLen = null;
+	private Obj iterator = null;
+	private Obj arrSrc = null;
+
 	private Stack<BranchContext> contextStack = new Stack<>();
- 	
+	
+	private boolean inMap = false;
+	private int mapPc;
+	private Obj identInMap = null;
+	private boolean firstInMap = false;
+	
 	public int getMainPc() {
 		return mainPc;
 	}
 	
 	public CodeGenerator(HashMap<String, Obj> arrMap) {
 		this.arrMap = arrMap;
+		
+		arrLen = new Obj(Obj.Var, "arrLen", Tab.intType);
+		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
+		Tab.currentScope.addToLocals(arrLen);
+		Tab.currentScope.addToLocals(iterator);
 	}
 	
 	public void visit(Program program) {
@@ -226,6 +241,66 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.put(Code.read);
 		}
 		Code.store(obj);
+	}
+	
+	public void visit(MapStmt mapStmt) {
+		Obj arrDst = arrMap.get(mapStmt.getDesignator().obj.getName());
+		
+		int[] tempBuff = new int[Code.pc - mapPc];
+		
+		for (int i = 0; i < tempBuff.length; i++) {
+			tempBuff[i] = Code.buf[mapPc + i];
+		}
+		
+		Code.pc = mapPc;
+		
+		Code.load(arrSrc);
+		Code.put(Code.arraylength);
+		Code.store(arrLen);
+		
+		Code.loadConst(0);
+		Code.store(iterator);
+		
+		Code.load(arrLen);
+		Code.put(Code.newarray);
+		Code.put(1);
+		Code.store(arrDst);
+		
+		int loopStartAdr = Code.pc;
+		Code.load(iterator);
+		Code.load(arrLen);
+		Code.putFalseJump(Code.lt, 0);
+		int patchAdr = Code.pc - 2;
+		
+		///////////
+		for (int i = 0; i < tempBuff.length; i++) {
+			Code.put(tempBuff[i]);
+		}
+		
+		Code.load(arrDst);
+		Code.put(Code.dup_x1);
+		Code.put(Code.pop);
+		Code.load(iterator);
+		Code.put(Code.dup_x1);
+		Code.put(Code.pop);
+		Code.put(Code.astore);
+		
+		Code.load(iterator);
+		Code.loadConst(1);
+		Code.put(Code.add);
+		Code.store(iterator);
+		
+		Code.putJump(loopStartAdr);
+		Code.fixup(patchAdr);
+		
+		inMap = false;
+	}
+	
+	public void visit(MapEntry mapEntry) {
+		inMap = true;
+		firstInMap = true;
+		mapPc = Code.pc;
+		arrSrc = arrMap.get(mapEntry.getDesignator().obj.getName());
 	}
 	
 	public void visit(UnmatchedIf unmatchedIf) {
@@ -395,10 +470,15 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	public void visit(FactorVar factorVar) {
 		SyntaxNode parent = factorVar.getParent();
-		
 		if (parent.getClass() != DesignatorStmtAssign.class && parent.getClass() != DesignatorStmtFuncCall.class) {
 			if (factorVar.getDesignator().obj.getKind() == Obj.Var) {
-				Code.load(factorVar.getDesignator().obj);
+				if (inMap && factorVar.getDesignator().obj == identInMap) {
+					Code.load(arrSrc);
+					Code.load(iterator);
+					Code.put(Code.aload);
+				} else {
+					Code.load(factorVar.getDesignator().obj);
+				}
 			} else {
 				Code.put(Code.aload);
 			}
@@ -458,8 +538,13 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (obj.getType().getKind() == Struct.Array && obj.getType().getElemType().getKind() == Struct.Array) {
 			currMatrix = obj;
 		}
+		
+		if (inMap && firstInMap) {
+			firstInMap = false;
+			identInMap = obj;
+		}
 	}
-
+	
 	public void visit(DesignatorArr designatorArr) {
 		Obj obj = arrMap.get(designatorArr.obj.getName());
 		Code.load(obj);
@@ -475,7 +560,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.pop);
 		Code.put(Code.dup_x1);
 		Code.put(Code.pop);
-		Code.load(Tab.find(obj.getName() + "M"));
+		Code.load(Tab.find(obj.getName() + "N"));
 		Code.put(Code.mul);
 		Code.put(Code.add);
 	}

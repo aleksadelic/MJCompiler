@@ -1,6 +1,7 @@
 program MJProgram
 	int x; int y;
 	int arr[];
+	int arrNew[];
 	int matrix[][];
 	char c;
 	bool flag;
@@ -88,6 +89,8 @@ program MJProgram
 		matrix = new int[3][4];
 	
 		print(i);
+		
+		i = 4;
 			
 		matrix[0][1] = 1;
 		matrix[1][2] = 5;
@@ -221,6 +224,20 @@ program MJProgram
 		while (x < 5 || x == 5) {
 			x++;
 			print(x);
+		}
+		
+		arr = new int[5];
+		
+		i = 0;
+		while (i < 5) {
+			arr[i] = i + 1;
+			i++;
+		}
+		
+		i = 0;
+		while (i < 5) {
+			print(arr[i]);
+			i++;
 		}
 		
 	}

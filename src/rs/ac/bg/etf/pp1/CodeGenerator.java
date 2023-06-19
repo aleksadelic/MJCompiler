@@ -100,11 +100,12 @@ public class CodeGenerator extends VisitorAdaptor {
 	private int mapPc;
 	private Obj identInMap = null;
 	private boolean firstInMap = false;
+	private int nextAdr = 65535;
 	
 	public int getMainPc() {
 		return mainPc;
 	}
-	
+ 	
 	public CodeGenerator(HashMap<String, Obj> arrMap) {
 		this.arrMap = arrMap;
 		
@@ -112,6 +113,11 @@ public class CodeGenerator extends VisitorAdaptor {
 		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
 		Tab.currentScope.addToLocals(arrLen);
 		Tab.currentScope.addToLocals(iterator);
+		
+		//arrLen = Tab.insert(Obj.Var, "arrLen", Tab.intType);
+		//iterator = Tab.insert(Obj.Var, "iterator", Tab.intType);
+		//arrLen.setAdr(nextAdr--);
+		//iterator.setAdr(nextAdr--);
 	}
 	
 	public void visit(Program program) {
@@ -206,7 +212,7 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.loadConst(5);
 			Code.put(Code.print);
 		} else if (printStmt.getExpr().struct.equals(Tab.charType)) {
-			Code.loadConst(1);
+			Code.loadConst(5);
 			Code.put(Code.bprint);
 		} else {
 			// Print boolean
@@ -471,7 +477,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(FactorVar factorVar) {
 		SyntaxNode parent = factorVar.getParent();
 		if (parent.getClass() != DesignatorStmtAssign.class && parent.getClass() != DesignatorStmtFuncCall.class) {
-			if (factorVar.getDesignator().obj.getKind() == Obj.Var) {
+			if (factorVar.getDesignator().obj.getKind() == Obj.Var || factorVar.getDesignator().obj.getKind() == Obj.Con) {
 				if (inMap && factorVar.getDesignator().obj == identInMap) {
 					Code.load(arrSrc);
 					Code.load(iterator);
@@ -479,7 +485,7 @@ public class CodeGenerator extends VisitorAdaptor {
 				} else {
 					Code.load(factorVar.getDesignator().obj);
 				}
-			} else {
+			} else if (factorVar.getDesignator().obj.getKind() == Obj.Elem) {
 				Code.put(Code.aload);
 			}
 		}
@@ -520,7 +526,9 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	public void visit(ConstrFactorMatrix constrFactorMatrix) {
 		Code.put(Code.dup);
-		Obj obj = new Obj(Obj.Var, currMatrix.getName() + "N", Tab.intType);
+		//Obj obj = new Obj(Obj.Var, currMatrix.getName() + "N", Tab.intType);
+		Obj obj = Tab.insert(Obj.Var, currMatrix.getName() + "N", Tab.intType);
+		obj.setAdr(nextAdr--);
 		Code.store(obj);
 		Tab.currentScope.addToLocals(obj);
 		Code.put(Code.mul);

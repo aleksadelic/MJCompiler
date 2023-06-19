@@ -1,35 +1,37 @@
 program MJProgram
 	int x; int y;
 	int matrix[][];
-	int i, j;
+	int arr[];
+	int arrNew[];
 {
 
-	void main() {
+	void main() int i, j, k; {
 		
 		matrix = new int[3][4];
 		
+		print(i);
+		print(j);
+		print(k);
+		
+		arr = new int[5];
+		
 		i = 0;
-		while(i < 3) {
-			j = 0;
-			while (j < 4) {
-				matrix[i][j] = i * 4 + j;
-				j++;
-			}
+		while (i < 5) {
+			arr[i] = i + 1;
 			i++;
 		}
 		
+		arrNew = arr.map(x => 3 * x);
+		
 		i = 0;
-		while(i < 3) {
-			j = 0;
-			while (j < 4) {
-				print(matrix[i][j]);
-				j++;
-			}
+		while (i < 5) {
+			print(arrNew[i]);
 			i++;
-			print('|');
 		}
 		
-		print(matrix[2][1]);
+		print(i);
+		print(j);
+		print(k);
 		
 	}
 	

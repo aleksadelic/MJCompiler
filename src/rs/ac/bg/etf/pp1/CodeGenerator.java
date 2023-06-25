@@ -1,10 +1,6 @@
 package rs.ac.bg.etf.pp1;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -30,10 +26,7 @@ import rs.ac.bg.etf.pp1.ast.DesignatorStmtDecr;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtFuncCall;
 import rs.ac.bg.etf.pp1.ast.DesignatorStmtIncr;
 import rs.ac.bg.etf.pp1.ast.ElseEntry;
-import rs.ac.bg.etf.pp1.ast.Expr;
-import rs.ac.bg.etf.pp1.ast.Factor;
 import rs.ac.bg.etf.pp1.ast.FactorFuncCall;
-import rs.ac.bg.etf.pp1.ast.FactorTerm;
 import rs.ac.bg.etf.pp1.ast.FactorVar;
 import rs.ac.bg.etf.pp1.ast.IfEntry;
 import rs.ac.bg.etf.pp1.ast.MapEntry;
@@ -47,12 +40,10 @@ import rs.ac.bg.etf.pp1.ast.MulOpFactorTerm;
 import rs.ac.bg.etf.pp1.ast.MulOpMod;
 import rs.ac.bg.etf.pp1.ast.MulOpMul;
 import rs.ac.bg.etf.pp1.ast.MultCondFact;
-import rs.ac.bg.etf.pp1.ast.MultCondTerm;
 import rs.ac.bg.etf.pp1.ast.MultCondition;
 import rs.ac.bg.etf.pp1.ast.NumConst;
 import rs.ac.bg.etf.pp1.ast.Or;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
-import rs.ac.bg.etf.pp1.ast.ProgName;
 import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.RelOp;
@@ -65,11 +56,8 @@ import rs.ac.bg.etf.pp1.ast.RelOpNeq;
 import rs.ac.bg.etf.pp1.ast.ReturnExpr;
 import rs.ac.bg.etf.pp1.ast.ReturnNoExpr;
 import rs.ac.bg.etf.pp1.ast.SingleCondFact;
-import rs.ac.bg.etf.pp1.ast.SingleCondTerm;
 import rs.ac.bg.etf.pp1.ast.SingleCondition;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
-import rs.ac.bg.etf.pp1.ast.Term;
-import rs.ac.bg.etf.pp1.ast.TermExpr;
 import rs.ac.bg.etf.pp1.ast.TermExprMinus;
 import rs.ac.bg.etf.pp1.ast.UnmatchedIf;
 import rs.ac.bg.etf.pp1.ast.UnmatchedIfElse;
@@ -79,7 +67,6 @@ import rs.ac.bg.etf.pp1.ast.WhileStmt;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
-import rs.etf.pp1.symboltable.concepts.Struct;
 
 public class CodeGenerator extends VisitorAdaptor {
 	
@@ -89,7 +76,6 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	private HashMap<String, Obj> arrMap = null;
 	
-	private Obj currMatrix = null;
 	private Obj arrLen = null;
 	private Obj iterator = null;
 	private Obj arrSrc = null;
@@ -100,7 +86,6 @@ public class CodeGenerator extends VisitorAdaptor {
 	private int mapPc;
 	private Obj identInMap = null;
 	private boolean firstInMap = false;
-	private int nextAdr = 65535;
 	
 	public int getMainPc() {
 		return mainPc;
@@ -113,11 +98,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
 		Tab.currentScope.addToLocals(arrLen);
 		Tab.currentScope.addToLocals(iterator);
-		
-		//arrLen = Tab.insert(Obj.Var, "arrLen", Tab.intType);
-		//iterator = Tab.insert(Obj.Var, "iterator", Tab.intType);
-		//arrLen.setAdr(nextAdr--);
-		//iterator.setAdr(nextAdr--);
 	}
 	
 	public void visit(Program program) {
@@ -525,12 +505,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(ConstrFactorMatrix constrFactorMatrix) {
-		Code.put(Code.dup);
-		//Obj obj = new Obj(Obj.Var, currMatrix.getName() + "N", Tab.intType);
-		Obj obj = Tab.insert(Obj.Var, currMatrix.getName() + "N", Tab.intType);
-		obj.setAdr(nextAdr--);
-		Code.store(obj);
-		Tab.currentScope.addToLocals(obj);
+		Code.put(Code.dup_x1);
 		Code.put(Code.mul);
 		Code.put(Code.newarray);
 		if (constrFactorMatrix.getType().struct.equals(Tab.intType)) {
@@ -539,13 +514,22 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.put(0);
 		}
 		
+		Code.put(Code.new_);
+		Code.put2(8);
+		
+		Code.put(Code.dup_x2);
+		Code.put(Code.dup_x2);
+		Code.put(Code.dup_x1);
+		Code.put(Code.pop);
+		
+		Code.put(Code.putfield);
+		Code.put2(0);
+		Code.put(Code.putfield);
+		Code.put2(1);
 	}
 	
 	public void visit(DesignatorIdent designator) {
 		Obj obj = designator.obj;
-		if (obj.getType().getKind() == Struct.Array && obj.getType().getElemType().getKind() == Struct.Array) {
-			currMatrix = obj;
-		}
 		
 		if (inMap && firstInMap) {
 			firstInMap = false;
@@ -564,11 +548,15 @@ public class CodeGenerator extends VisitorAdaptor {
 		Obj obj = arrMap.get(designatorMatrix.obj.getName());
 		
 		Code.load(obj);
+		Code.put(Code.getfield);
+		Code.put2(0);
 		Code.put(Code.dup_x2);
 		Code.put(Code.pop);
 		Code.put(Code.dup_x1);
 		Code.put(Code.pop);
-		Code.load(Tab.find(obj.getName() + "N"));
+		Code.load(obj);
+		Code.put(Code.getfield);
+		Code.put2(1);
 		Code.put(Code.mul);
 		Code.put(Code.add);
 	}

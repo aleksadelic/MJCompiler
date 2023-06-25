@@ -44,6 +44,7 @@ import rs.ac.bg.etf.pp1.ast.MultCondition;
 import rs.ac.bg.etf.pp1.ast.NumConst;
 import rs.ac.bg.etf.pp1.ast.Or;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
+import rs.ac.bg.etf.pp1.ast.PrintStmtNum;
 import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.RelOp;
@@ -67,6 +68,7 @@ import rs.ac.bg.etf.pp1.ast.WhileStmt;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
+import rs.etf.pp1.symboltable.concepts.Struct;
 
 public class CodeGenerator extends VisitorAdaptor {
 	
@@ -188,11 +190,25 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	public void visit(PrintStmt printStmt) {
-		if (printStmt.getExpr().struct.equals(Tab.intType)) {
-			Code.loadConst(5);
+		processPrintStmt(printStmt, 5);
+	}
+	
+	public void visit(PrintStmtNum printStmt) {
+		processPrintStmt(printStmt, printStmt.getN2());
+	}
+	
+	private void processPrintStmt(SyntaxNode printStmt, int width) {
+		Struct struct = null;
+		if (printStmt instanceof PrintStmt) {
+			struct = ((PrintStmt) printStmt).getExpr().struct;
+		} else {
+			struct = ((PrintStmtNum) printStmt).getExpr().struct;
+		}
+		if (struct.equals(Tab.intType)) {
+			Code.loadConst(width);
 			Code.put(Code.print);
-		} else if (printStmt.getExpr().struct.equals(Tab.charType)) {
-			Code.loadConst(5);
+		} else if (struct.equals(Tab.charType)) {
+			Code.loadConst(width);
 			Code.put(Code.bprint);
 		} else {
 			// Print boolean

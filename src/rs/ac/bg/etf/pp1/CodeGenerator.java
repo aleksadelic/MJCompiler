@@ -78,7 +78,6 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	private HashMap<String, Obj> arrMap = null;
 	
-	private Obj arrLen = null;
 	private Obj iterator = null;
 	private Obj arrSrc = null;
 
@@ -96,9 +95,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	public CodeGenerator(HashMap<String, Obj> arrMap) {
 		this.arrMap = arrMap;
 		
-		arrLen = new Obj(Obj.Var, "arrLen", Tab.intType);
 		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
-		Tab.currentScope.addToLocals(arrLen);
 		Tab.currentScope.addToLocals(iterator);
 	}
 	
@@ -256,25 +253,22 @@ public class CodeGenerator extends VisitorAdaptor {
 		
 		Code.pc = mapPc;
 		
-		Code.load(arrSrc);
-		Code.put(Code.arraylength);
-		Code.store(arrLen);
-		
 		Code.loadConst(0);
 		Code.store(iterator);
 		
-		Code.load(arrLen);
+		Code.load(arrSrc);
+		Code.put(Code.arraylength);
 		Code.put(Code.newarray);
 		Code.put(1);
 		Code.store(arrDst);
 		
 		int loopStartAdr = Code.pc;
 		Code.load(iterator);
-		Code.load(arrLen);
+		Code.load(arrSrc);
+		Code.put(Code.arraylength);
 		Code.putFalseJump(Code.lt, 0);
 		int patchAdr = Code.pc - 2;
 		
-		///////////
 		for (int i = 0; i < tempBuff.length; i++) {
 			Code.put(tempBuff[i]);
 		}

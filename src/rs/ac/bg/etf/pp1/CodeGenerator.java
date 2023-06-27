@@ -96,7 +96,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		this.arrMap = arrMap;
 		
 		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
-		Tab.currentScope.addToLocals(iterator);
 	}
 	
 	public void visit(Program program) {
@@ -170,6 +169,10 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.loadConst(num);
 			Code.put(Code.add);
 			Code.load(obj);
+			if (obj.getType().getElemType().getKind() == Struct.Array) {
+				Code.put(Code.getfield);
+				Code.put2(0);
+			}
 			Code.put(Code.dup_x2);
 			Code.put(Code.pop);
 			Code.put(Code.astore);

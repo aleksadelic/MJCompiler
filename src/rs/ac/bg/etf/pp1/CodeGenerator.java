@@ -94,12 +94,15 @@ public class CodeGenerator extends VisitorAdaptor {
  	
 	public CodeGenerator(HashMap<String, Obj> arrMap) {
 		this.arrMap = arrMap;
-		
 		iterator = new Obj(Obj.Var, "iterator", Tab.intType);
-	}
-	
-	public void visit(Program program) {
-		Tab.dump(new MyDumpSymbolTableVisitor());
+		Obj ord = Tab.find("ord");
+		Obj chr = Tab.find("chr");
+		Obj len = Tab.find("len");
+        len.setAdr(Code.pc);
+        Code.put(Code.arraylength);
+        ord.setAdr(Code.pc);
+        chr.setAdr(Code.pc);
+        Code.put(Code.return_);
 	}
 
 	public void visit(MethodTypeName methodTypeName) {

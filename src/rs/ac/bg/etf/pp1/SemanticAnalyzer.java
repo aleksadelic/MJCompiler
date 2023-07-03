@@ -46,7 +46,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		List<Struct> lenPars = new ArrayList<>();
 		chrPars.add(Tab.intType);
 		ordPars.add(Tab.charType);
-		lenPars.add(new Struct(Struct.Array));
+		lenPars.add(new Struct(Struct.Array, Tab.noType));
 
 		funcPars.put(Tab.chrObj, chrPars);
 		funcPars.put(Tab.ordObj, ordPars);

@@ -1,0 +1,65 @@
+program MJProgram
+	int matrix[][];
+	int i, j;
+{
+
+	void main() {
+		
+		matrix = new int[2][3];
+		
+		i = 0;
+		while (i < 2) {
+			j = 0;
+			while (j < 3) {
+				matrix[i][j] = i * 3 + j + 1;
+				j++;
+			}
+			i++;
+		}
+		
+		i = 0;
+		while (i < 2) {
+			j = 0;
+			while (j < 3) {
+				print(matrix[i][j]);
+				j++;
+			}
+			print(eol);
+			i++;
+		}
+		
+		print(eol);
+		matrix[0][0]++;
+
+		i = 0;
+		while (i < 2) {
+			j = 0;
+			while (j < 3) {
+				print(matrix[i][j]);
+				j++;
+			}
+			print(eol);
+			i++;
+		}
+		
+		read(matrix[1][0]);
+		read(matrix[1][1]);
+		read(matrix[1][2]);
+		
+		print(eol);
+		matrix[0][0]++;
+
+		i = 0;
+		while (i < 2) {
+			j = 0;
+			while (j < 3) {
+				print(matrix[i][j]);
+				j++;
+			}
+			print(eol);
+			i++;
+		}
+		
+	}
+	
+}
